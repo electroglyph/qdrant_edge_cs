@@ -258,6 +258,144 @@ public abstract record Expression
         return build(parts, size, depth);
     }
 
+    /// <summary>Validates the whole tree by recomputing size and depth.</summary>
+    /// <remarks>
+    /// <see cref="Size"/> and <see cref="Depth"/> are init-settable so forged
+    /// values cannot be trusted; this walk recomputes both from the children
+    /// and enforces the 10k-node and 64-deep caps on the actual shape.
+    /// </remarks>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        (ulong size, uint depth) = MeasureActual();
+        EdgeValidation.CheckExpressionSize(size);
+        EdgeValidation.CheckNestingDepth("formula", depth);
+    }
+
+    private (ulong Size, uint Depth) MeasureActual() => this switch
+    {
+        ConstantExpression(var value) => ValidateConstant(value),
+        VariableExpression(var name) => ValidateVariable(name),
+        ConditionExpression cond => ValidateCondition(cond.Predicate),
+        GeoDistanceExpression(var origin, var key) => ValidateGeo(origin, key),
+        DatetimeExpression(var value) => ValidateDatetime(value),
+        DatetimeKeyExpression(var key) => ValidateDatetimeKey(key),
+        MultExpression(var factors) => MeasureChildren(factors),
+        SumExpression(var terms) => MeasureChildren(terms),
+        MaxExpression(var operands) => MeasureNonEmpty(operands, "max"),
+        MinExpression(var operands) => MeasureNonEmpty(operands, "min"),
+        NegateExpression(var operand) => MeasureChildren([operand]),
+        DivExpression(var left, var right, var fallback) => ValidateDiv(left, right, fallback),
+        SqrtExpression(var operand) => MeasureChildren([operand]),
+        PowExpression(var basis, var exponent) => MeasureChildren([basis, exponent]),
+        ExpExpression(var operand) => MeasureChildren([operand]),
+        Log10Expression(var operand) => MeasureChildren([operand]),
+        LnExpression(var operand) => MeasureChildren([operand]),
+        AcoshExpression(var operand) => MeasureChildren([operand]),
+        AbsExpression(var operand) => MeasureChildren([operand]),
+        DecayExpression(var kind, var x, var target, var midpoint, var scale) =>
+            ValidateDecay(x, target, midpoint, scale),
+        _ => throw new EdgeInvalidArgumentException("unknown formula expression shape"),
+    };
+
+    private static (ulong Size, uint Depth) ValidateConstant(float value)
+    {
+        EdgeValidation.CheckFinite(nameof(value), value);
+        return (1, 1);
+    }
+
+    private static (ulong Size, uint Depth) ValidateVariable(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        return (1, 1);
+    }
+
+    private static (ulong Size, uint Depth) ValidateCondition(Condition? predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate, nameof(predicate));
+        predicate.Validate();
+        ulong size = 1 + predicate.Depth();
+        uint depth = 1 + predicate.Depth();
+        return (size, depth);
+    }
+
+    private static (ulong Size, uint Depth) ValidateGeo(GeoPoint? origin, string key)
+    {
+        ArgumentNullException.ThrowIfNull(origin, nameof(origin));
+        ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        origin.Validate();
+        EdgeValidation.CheckPayloadKey(key);
+        return (1, 1);
+    }
+
+    private static (ulong Size, uint Depth) ValidateDatetime(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));
+        return (1, 1);
+    }
+
+    private static (ulong Size, uint Depth) ValidateDatetimeKey(string key)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        EdgeValidation.CheckPayloadKey(key);
+        return (1, 1);
+    }
+
+    private static (ulong Size, uint Depth) ValidateDiv(Expression? left, Expression? right, float? fallback)
+    {
+        ArgumentNullException.ThrowIfNull(left, nameof(left));
+        ArgumentNullException.ThrowIfNull(right, nameof(right));
+        if (fallback is float value)
+        {
+            EdgeValidation.CheckFinite(nameof(fallback), value);
+        }
+
+        return MeasureChildren([left, right]);
+    }
+
+    private static (ulong Size, uint Depth) ValidateDecay(Expression? x, Expression? target, float? midpoint, float? scale)
+    {
+        ArgumentNullException.ThrowIfNull(x, nameof(x));
+        if (midpoint is float mid)
+        {
+            EdgeValidation.CheckFinite(nameof(midpoint), mid);
+        }
+
+        if (scale is float sc)
+        {
+            EdgeValidation.CheckFinite(nameof(scale), sc);
+        }
+
+        return target is null ? MeasureChildren([x]) : MeasureChildren([x, target]);
+    }
+
+    private static (ulong Size, uint Depth) MeasureChildren(IReadOnlyList<Expression> parts)
+    {
+        ArgumentNullException.ThrowIfNull(parts, nameof(parts));
+        ulong size = 1;
+        uint depth = 1;
+        foreach (Expression part in parts)
+        {
+            ArgumentNullException.ThrowIfNull(part, nameof(part));
+            (ulong childSize, uint childDepth) = part.MeasureActual();
+            size = size >= ulong.MaxValue - childSize ? ulong.MaxValue : size + childSize;
+            depth = Math.Max(depth, childDepth + 1);
+        }
+
+        return (size, depth);
+    }
+
+    private static (ulong Size, uint Depth) MeasureNonEmpty(IReadOnlyList<Expression> parts, string op)
+    {
+        ArgumentNullException.ThrowIfNull(parts, nameof(parts));
+        if (parts.Count == 0)
+        {
+            throw new EdgeInvalidArgumentException($"{op} requires at least one operand");
+        }
+
+        return MeasureChildren(parts);
+    }
+
     private static (ulong Size, uint Depth) Measure(IReadOnlyList<Expression> parts)
     {
         ulong size = 1;

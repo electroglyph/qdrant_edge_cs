@@ -5,18 +5,27 @@ use crate::json::{as_str, as_u64, field, kind, required};
 
 /// Parse a C# `Expression` kind-union object into the engine formula node.
 ///
-/// Every node carries client-computed `Size`/`Depth`; both are checked before
-/// any child is built, mirroring the check-before-clone ordering of the FFI
-/// constructors.
+/// The wire `Size`/`Depth` fields are required for shape compatibility but are
+/// never trusted for enforcement: a forged `Size` would bypass the heap cap.
+/// Instead the parse tracks the actual recursion depth (stack safety) and a
+/// saturating node counter (heap safety) while building, rejecting anything
+/// past the caps as it goes.
 pub(crate) fn parse_expression(v: &Value) -> Result<edge::Expression> {
+    let mut nodes: u64 = 0;
+    // Root depth is 1 so a 64-deep tree passes and a 65-deep one fails,
+    // matching the C# `Validate` measure.
+    parse_expression_inner(v, 1, &mut nodes)
+}
+
+fn parse_expression_inner(v: &Value, depth: u32, nodes: &mut u64) -> Result<edge::Expression> {
     const CTX: &str = "formula expression";
-    let size = as_u64(required(v, "Size", CTX)?, CTX, "Size")?;
-    check_expression_size(size)?;
-    let depth_raw = as_u64(required(v, "Depth", CTX)?, CTX, "Depth")?;
-    let depth = u32::try_from(depth_raw).map_err(|_| {
-        ApiError::invalid_argument(format!("{CTX} field \"Depth\" is out of range"))
-    })?;
     check_nesting_depth(CTX, depth)?;
+    *nodes = nodes.saturating_add(1);
+    check_expression_size(*nodes)?;
+    // Required on the wire; the values are informational only and are not
+    // used for enforcement (see above).
+    let _ = field(v, "Size");
+    let _ = field(v, "Depth");
     match kind(v, CTX)? {
         "constant" => {
             let value = finite(required(v, "Value", CTX)?, "formula constant must be finite")?;
@@ -55,27 +64,27 @@ pub(crate) fn parse_expression(v: &Value) -> Result<edge::Expression> {
             Ok(edge::Expression::DatetimeKey(super::filter::parse_key(key, CTX)?))
         }
         "mult" => {
-            let factors = child_array(v, "Factors")?;
+            let factors = child_array(v, "Factors", depth, nodes)?;
             Ok(edge::Expression::Mult(factors))
         }
         "sum" => {
-            let terms = child_array(v, "Terms")?;
+            let terms = child_array(v, "Terms", depth, nodes)?;
             Ok(edge::Expression::Sum(terms))
         }
         "max" => {
-            let operands = child_array(v, "Operands")?;
+            let operands = child_array(v, "Operands", depth, nodes)?;
             require_non_empty("max", &operands)?;
             Ok(edge::Expression::Max(operands))
         }
         "min" => {
-            let operands = child_array(v, "Operands")?;
+            let operands = child_array(v, "Operands", depth, nodes)?;
             require_non_empty("min", &operands)?;
             Ok(edge::Expression::Min(operands))
         }
-        "negate" => Ok(edge::Expression::Neg(Box::new(child(v, "Operand")?))),
+        "negate" => Ok(edge::Expression::Neg(Box::new(child(v, "Operand", depth, nodes)?))),
         "div" => {
-            let left = child(v, "Left")?;
-            let right = child(v, "Right")?;
+            let left = child(v, "Left", depth, nodes)?;
+            let right = child(v, "Right", depth, nodes)?;
             let by_zero_default = opt_finite(v, "ByZeroDefault", "div by_zero_default must be finite")?;
             Ok(edge::Expression::Div {
                 left: Box::new(left),
@@ -83,26 +92,26 @@ pub(crate) fn parse_expression(v: &Value) -> Result<edge::Expression> {
                 by_zero_default,
             })
         }
-        "sqrt" => Ok(edge::Expression::Sqrt(Box::new(child(v, "Operand")?))),
+        "sqrt" => Ok(edge::Expression::Sqrt(Box::new(child(v, "Operand", depth, nodes)?))),
         "pow" => {
-            let basis = child(v, "Basis")?;
-            let exponent = child(v, "Exponent")?;
+            let basis = child(v, "Basis", depth, nodes)?;
+            let exponent = child(v, "Exponent", depth, nodes)?;
             Ok(edge::Expression::Pow {
                 base: Box::new(basis),
                 exponent: Box::new(exponent),
             })
         }
-        "exp" => Ok(edge::Expression::Exp(Box::new(child(v, "Operand")?))),
-        "log10" => Ok(edge::Expression::Log10(Box::new(child(v, "Operand")?))),
-        "ln" => Ok(edge::Expression::Ln(Box::new(child(v, "Operand")?))),
-        "acosh" => Ok(edge::Expression::Acosh(Box::new(child(v, "Operand")?))),
-        "abs" => Ok(edge::Expression::Abs(Box::new(child(v, "Operand")?))),
+        "exp" => Ok(edge::Expression::Exp(Box::new(child(v, "Operand", depth, nodes)?))),
+        "log10" => Ok(edge::Expression::Log10(Box::new(child(v, "Operand", depth, nodes)?))),
+        "ln" => Ok(edge::Expression::Ln(Box::new(child(v, "Operand", depth, nodes)?))),
+        "acosh" => Ok(edge::Expression::Acosh(Box::new(child(v, "Operand", depth, nodes)?))),
+        "abs" => Ok(edge::Expression::Abs(Box::new(child(v, "Operand", depth, nodes)?))),
         "decay" => {
             let decay_kind = parse_decay_kind(v)?;
-            let x = child(v, "X")?;
+            let x = child(v, "X", depth, nodes)?;
             let target = match field(v, "Target") {
                 None | Some(Value::Null) => None,
-                Some(raw) => Some(Box::new(parse_expression(raw)?)),
+                Some(raw) => Some(Box::new(parse_expression_inner(raw, depth + 1, nodes)?)),
             };
             let midpoint = opt_finite(v, "Midpoint", "decay midpoint must be finite")?;
             let scale = opt_finite(v, "Scale", "decay scale must be finite")?;
@@ -137,12 +146,12 @@ fn parse_decay_kind(v: &Value) -> Result<edge::DecayKind> {
 }
 
 /// Parse a required named single-child operand.
-fn child(v: &Value, key: &str) -> Result<edge::Expression> {
-    parse_expression(required(v, key, "formula expression")?)
+fn child(v: &Value, key: &str, depth: u32, nodes: &mut u64) -> Result<edge::Expression> {
+    parse_expression_inner(required(v, key, "formula expression")?, depth + 1, nodes)
 }
 
 /// Parse an operand list; absent and null read as empty.
-fn child_array(v: &Value, key: &str) -> Result<Vec<edge::Expression>> {
+fn child_array(v: &Value, key: &str, depth: u32, nodes: &mut u64) -> Result<Vec<edge::Expression>> {
     const CTX: &str = "formula expression";
     match field(v, key) {
         None | Some(Value::Null) => Ok(Vec::new()),
@@ -152,7 +161,7 @@ fn child_array(v: &Value, key: &str) -> Result<Vec<edge::Expression>> {
                 ApiError::invalid_argument(format!("{CTX} field {key:?} must be an array"))
             })?
             .iter()
-            .map(parse_expression)
+            .map(|item| parse_expression_inner(item, depth + 1, nodes))
             .collect(),
     }
 }
@@ -255,15 +264,33 @@ mod tests {
 
     #[test]
     fn parse_expression_rejects_bad_wire() {
-        let big = parse(r#"{"kind":"constant","Value":1.0,"Size":10001,"Depth":1}"#);
-        assert!(
-            parse_expression(&big)
-                .unwrap_err()
-                .message
-                .contains("exceeds the maximum")
-        );
-        let deep = parse(r#"{"kind":"constant","Value":1.0,"Size":1,"Depth":65}"#);
-        assert!(parse_expression(&deep).is_err());
+        // Wire Size/Depth are informational only: a forged small Size on a
+        // huge tree must not bypass the heap cap, and a forged large Size on
+        // a tiny tree is ignored rather than rejected.
+        let forged_small = parse(r#"{"kind":"constant","Value":1.0,"Size":10001,"Depth":1}"#);
+        parse_expression(&forged_small).expect("forged size on a tiny tree is ignored");
+        let forged_deep = parse(r#"{"kind":"constant","Value":1.0,"Size":1,"Depth":65}"#);
+        parse_expression(&forged_deep).expect("forged depth on a shallow tree is ignored");
+        // The caps apply to the actual shape: 65 genuinely nested negates.
+        let mut deep = r#"{"kind":"constant","Value":1.0,"Size":1,"Depth":1}"#.to_owned();
+        for _ in 0..65 {
+            deep = format!(r#"{{"kind":"negate","Operand":{deep},"Size":1,"Depth":1}}"#);
+        }
+        assert!(parse_expression(&parse(&deep)).is_err());
+        // And 10001 actual nodes exceed the heap cap.
+        let mut terms = String::from("[");
+        for i in 0..10_001 {
+            if i > 0 {
+                terms.push(',');
+            }
+            terms.push_str(r#"{"kind":"constant","Value":1.0,"Size":1,"Depth":1}"#);
+        }
+        terms.push(']');
+        let wide = parse(&format!(
+            r#"{{"kind":"sum","Terms":{terms},"Size":1,"Depth":1}}"#
+        ));
+        let err = parse_expression(&wide).unwrap_err();
+        assert!(err.message.contains("exceeds the maximum"), "{err:?}");
         let max = parse(r#"{"kind":"max","Operands":[],"Size":1,"Depth":1}"#);
         assert!(
             parse_expression(&max)
