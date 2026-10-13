@@ -113,11 +113,11 @@ public sealed class EdgeShard : IDisposable
     }
 
     /// <summary>Sets the HNSW configuration of one named vector field.</summary>
-    /// <param name="vectorName">Vector field name.</param>
+    /// <param name="vectorName">Vector field name; "" addresses the default unnamed vector.</param>
     /// <param name="hnsw">New HNSW settings.</param>
     public void SetVectorHnswConfig(string vectorName, HnswIndexConfig hnsw)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(vectorName, nameof(vectorName));
+        ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
         ArgumentNullException.ThrowIfNull(hnsw, nameof(hnsw));
         hnsw.Validate($"vector field {vectorName}");
         CallNative(

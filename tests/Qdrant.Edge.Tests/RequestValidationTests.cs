@@ -36,6 +36,45 @@ public sealed class RequestValidationTests
     }
 
     [Fact]
+    public void QueryRequest_LimitAboveCap_ThrowsOnValidate()
+    {
+        QueryRequest request = new() { Limit = EdgeValidation.MaxResultCount + 1 };
+        Assert.Throws<EdgeInvalidArgumentException>(request.Validate);
+    }
+
+    [Fact]
+    public void ScrollRequest_LimitAboveCap_ThrowsOnValidate()
+    {
+        ScrollRequest request = new() { Limit = EdgeValidation.MaxResultCount + 1 };
+        Assert.Throws<EdgeInvalidArgumentException>(request.Validate);
+    }
+
+    [Fact]
+    public void NestedFilter_DepthAboveCap_ThrowsOnValidate()
+    {
+        Filter inner = new();
+        for (int i = 0; i < 70; i++)
+        {
+            inner = new Filter { Must = [Condition.Nested("k", inner)] };
+        }
+
+        Assert.Throws<EdgeInvalidArgumentException>(inner.Validate);
+    }
+
+    [Fact]
+    public void PrefetchChain_DepthAboveCap_ThrowsOnValidate()
+    {
+        Prefetch inner = new() { Limit = 10 };
+        for (int i = 0; i < 70; i++)
+        {
+            inner = new Prefetch { Limit = 10, Prefetches = [inner] };
+        }
+
+        QueryRequest request = new() { Limit = 10, Prefetches = [inner] };
+        Assert.Throws<EdgeInvalidArgumentException>(request.Validate);
+    }
+
+    [Fact]
     public void FacetRequest_EmptyKey_ThrowsOnValidate()
     {
         FacetRequest request = new() { Key = string.Empty };

@@ -41,7 +41,8 @@ public abstract record Vector
                 ArgumentNullException.ThrowIfNull(map, nameof(map));
                 foreach ((string name, NamedVector named) in map)
                 {
-                    ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
+                    // "" is the default unnamed vector; only null is rejected client-side.
+                    ArgumentNullException.ThrowIfNull(name, nameof(name));
                     ArgumentNullException.ThrowIfNull(named, nameof(named));
                     switch (named)
                     {

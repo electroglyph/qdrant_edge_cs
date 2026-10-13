@@ -93,4 +93,15 @@ public sealed class UpdateOperationTests
         Assert.Equal(128ul, create.Size);
         Assert.Equal(Distance.Cosine, create.Distance);
     }
+
+    [Fact]
+    public void UpsertPoints_ConditionAndMode_Preserved()
+    {
+        Point point = TestHelpers.FourDimPoint(1, 1f, 2f, 3f, 4f);
+        Filter condition = new() { Must = [Condition.HasId([PointId.FromNumber(1)])] };
+        UpdateOperation operation = UpdateOperation.UpsertPoints([point], condition, UpdateMode.InsertOnly);
+        UpsertPointsOperation upsert = Assert.IsType<UpsertPointsOperation>(operation);
+        Assert.Same(condition, upsert.Condition);
+        Assert.Equal(UpdateMode.InsertOnly, upsert.UpdateMode);
+    }
 }

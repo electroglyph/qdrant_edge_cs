@@ -258,7 +258,7 @@ public abstract record UpdateOperation
     }
 
     /// <summary>Creates a dense vector field.</summary>
-    /// <param name="vectorName">Vector name.</param>
+    /// <param name="vectorName">Vector name; "" addresses the default unnamed vector.</param>
     /// <param name="size">Vector size (1..=65536).</param>
     /// <param name="distance">Distance metric.</param>
     /// <param name="multivectorConfig">Optional multi-vector config.</param>
@@ -270,13 +270,13 @@ public abstract record UpdateOperation
         MultiVectorConfig? multivectorConfig = null,
         VectorStorageDatatype? datatype = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(vectorName, nameof(vectorName));
+        ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
         EdgeValidation.CheckVectorSize(vectorName, size);
         return new CreateDenseVectorOperation(vectorName, size, distance, multivectorConfig, datatype);
     }
 
     /// <summary>Creates a sparse vector field (infallible).</summary>
-    /// <param name="vectorName">Vector name.</param>
+    /// <param name="vectorName">Vector name; "" addresses the default unnamed vector.</param>
     /// <param name="modifier">Optional modifier.</param>
     /// <param name="datatype">Optional storage datatype.</param>
     public static UpdateOperation CreateSparseVector(
@@ -284,15 +284,15 @@ public abstract record UpdateOperation
         Modifier? modifier = null,
         VectorStorageDatatype? datatype = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(vectorName, nameof(vectorName));
+        ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
         return new CreateSparseVectorOperation(vectorName, modifier, datatype);
     }
 
     /// <summary>Deletes a vector field (infallible).</summary>
-    /// <param name="vectorName">Vector name.</param>
+    /// <param name="vectorName">Vector name; "" addresses the default unnamed vector.</param>
     public static UpdateOperation DeleteVectorName(string vectorName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(vectorName, nameof(vectorName));
+        ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
         return new DeleteVectorNameOperation(vectorName);
     }
 

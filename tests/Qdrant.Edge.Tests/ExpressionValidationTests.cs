@@ -66,4 +66,18 @@ public sealed class ExpressionValidationTests
         Assert.Equal(Expression.Variable("a"), parts.Left);
         Assert.Equal(0f, parts.ByZeroDefault);
     }
+
+    [Fact]
+    public void Decay_NonFiniteMidpoint_ThrowsInvalidArgument()
+    {
+        Assert.Throws<EdgeInvalidArgumentException>(() =>
+            Expression.Decay(DecayKind.Gauss, Expression.Variable("$score"), null, float.NaN, null));
+    }
+
+    [Fact]
+    public void Div_NonFiniteFallback_ThrowsInvalidArgument()
+    {
+        Assert.Throws<EdgeInvalidArgumentException>(() =>
+            Expression.Div(Expression.Variable("a"), Expression.Constant(1f), float.PositiveInfinity));
+    }
 }

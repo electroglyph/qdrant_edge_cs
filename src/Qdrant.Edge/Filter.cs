@@ -34,15 +34,26 @@ public sealed record FieldCondition
         EdgeValidation.CheckPayloadKey(Key);
         int count = 0;
         count += Match is not null ? 1 : 0;
-        count += Range is not null ? 1 : 0;
-        count += DatetimeRange is not null ? 1 : 0;
+        count += Range is not null || DatetimeRange is not null ? 1 : 0;
         count += GeoBoundingBox is not null ? 1 : 0;
         count += GeoRadius is not null ? 1 : 0;
         count += GeoPolygon is not null ? 1 : 0;
         count += ValuesCount is not null ? 1 : 0;
-        if (count != 1)
+        if (count == 0)
         {
-            throw new EdgeInvalidArgumentException($"field condition on {Key} must hold exactly one predicate, got {count}");
+            throw new EdgeInvalidArgumentException(
+                "field condition has no predicate set: specify exactly one of match, range, datetime_range, geo_bounding_box, geo_radius, geo_polygon, or values_count");
+        }
+
+        if (count > 1)
+        {
+            throw new EdgeInvalidArgumentException(
+                "field condition has more than one predicate set: a field condition tests exactly one predicate. To AND several predicates on the same key, add one field condition per predicate to the filter's must clause");
+        }
+
+        if (Range is not null && DatetimeRange is not null)
+        {
+            throw new EdgeInvalidArgumentException("field condition: set either range or datetime_range, not both");
         }
 
         GeoRadius?.Validate();

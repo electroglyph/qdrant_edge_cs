@@ -77,7 +77,8 @@ public static class EdgeValidation
     /// <exception cref="EdgeInvalidArgumentException">When the size is out of range.</exception>
     public static void CheckVectorSize(string field, ulong size)
     {
-        ArgumentException.ThrowIfNullOrEmpty(field, nameof(field));
+        // "" names the default vector; only null is rejected client-side.
+        ArgumentNullException.ThrowIfNull(field, nameof(field));
         if (size is < 1 or > 65_536)
         {
             throw new EdgeInvalidArgumentException($"{field} size {size} is out of range 1..=65536");
