@@ -141,6 +141,39 @@ public sealed record OptimizersConfig
 
     /// <summary>Whether to prevent unoptimized segments.</summary>
     public bool? PreventUnoptimized { get; init; }
+
+    /// <summary>Validates deleted threshold and kb bounds.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When a bound is violated.</exception>
+    public void Validate()
+    {
+        if (DeletedThreshold is double threshold)
+        {
+            if (double.IsNaN(threshold) || double.IsInfinity(threshold) || threshold is < 0.0 or > 1.0)
+            {
+                throw new EdgeInvalidArgumentException($"optimizers deleted_threshold {threshold} must be finite and in [0, 1]");
+            }
+        }
+
+        if (VacuumMinVectorNumber is ulong vacuum && vacuum > EdgeValidation.MaxResultCount)
+        {
+            throw new EdgeInvalidArgumentException($"optimizers vacuum_min_vector_number {vacuum} exceeds maximum {EdgeValidation.MaxResultCount}");
+        }
+
+        if (DefaultSegmentNumber is ulong segments && (segments == 0 || segments > EdgeValidation.MaxResultCount))
+        {
+            throw new EdgeInvalidArgumentException($"optimizers default_segment_number {segments} is out of range 1..={EdgeValidation.MaxResultCount}");
+        }
+
+        if (MaxSegmentSizeKb is ulong maxSegment && maxSegment == 0)
+        {
+            throw new EdgeInvalidArgumentException("optimizers max_segment_size_kb must be > 0");
+        }
+
+        if (IndexingThresholdKb is ulong indexing && indexing == 0)
+        {
+            throw new EdgeInvalidArgumentException("optimizers indexing_threshold_kb must be > 0");
+        }
+    }
 }
 
 /// <summary>Shard configuration: at least one of dense or sparse vectors is required.</summary>

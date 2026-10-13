@@ -89,6 +89,85 @@ public abstract record Query
         IReadOnlyList<FeedbackItem> feedback,
         FeedbackCoefficients coefficients,
         string? usingVector = null) => new FeedbackQuery(target, feedback, coefficients, usingVector);
+
+    /// <summary>Validates query vectors, finiteness, and nested shapes.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        switch (this)
+        {
+            case NearestQuery(var vector, _):
+                ArgumentNullException.ThrowIfNull(vector, nameof(vector));
+                vector.Validate();
+                break;
+            case RecommendQuery(var positives, var negatives, _, _):
+                ArgumentNullException.ThrowIfNull(positives, nameof(positives));
+                ArgumentNullException.ThrowIfNull(negatives, nameof(negatives));
+                if (positives.Count == 0)
+                {
+                    throw new EdgeInvalidArgumentException("recommend query requires at least one positive example");
+                }
+
+                foreach (NamedVector vector in positives)
+                {
+                    ArgumentNullException.ThrowIfNull(vector, nameof(vector));
+                    vector.Validate();
+                }
+
+                foreach (NamedVector vector in negatives)
+                {
+                    ArgumentNullException.ThrowIfNull(vector, nameof(vector));
+                    vector.Validate();
+                }
+
+                break;
+            case DiscoverQuery(var target, var context, _):
+                ArgumentNullException.ThrowIfNull(target, nameof(target));
+                ArgumentNullException.ThrowIfNull(context, nameof(context));
+                target.Validate();
+                foreach (ContextPair pair in context)
+                {
+                    ArgumentNullException.ThrowIfNull(pair, nameof(pair));
+                    ArgumentNullException.ThrowIfNull(pair.Positive, nameof(pair.Positive));
+                    ArgumentNullException.ThrowIfNull(pair.Negative, nameof(pair.Negative));
+                    pair.Positive.Validate();
+                    pair.Negative.Validate();
+                }
+
+                break;
+            case ContextQuery(var context, _):
+                ArgumentNullException.ThrowIfNull(context, nameof(context));
+                foreach (ContextPair pair in context)
+                {
+                    ArgumentNullException.ThrowIfNull(pair, nameof(pair));
+                    ArgumentNullException.ThrowIfNull(pair.Positive, nameof(pair.Positive));
+                    ArgumentNullException.ThrowIfNull(pair.Negative, nameof(pair.Negative));
+                    pair.Positive.Validate();
+                    pair.Negative.Validate();
+                }
+
+                break;
+            case FeedbackQuery(var target, var feedback, var coefficients, _):
+                ArgumentNullException.ThrowIfNull(target, nameof(target));
+                ArgumentNullException.ThrowIfNull(feedback, nameof(feedback));
+                ArgumentNullException.ThrowIfNull(coefficients, nameof(coefficients));
+                target.Validate();
+                foreach (FeedbackItem item in feedback)
+                {
+                    ArgumentNullException.ThrowIfNull(item, nameof(item));
+                    ArgumentNullException.ThrowIfNull(item.Vector, nameof(item.Vector));
+                    item.Vector.Validate();
+                    EdgeValidation.CheckFinite("feedback score", item.Score);
+                }
+
+                EdgeValidation.CheckFinite("feedback coefficient a", coefficients.A);
+                EdgeValidation.CheckFinite("feedback coefficient b", coefficients.B);
+                EdgeValidation.CheckFinite("feedback coefficient c", coefficients.C);
+                break;
+            default:
+                throw new EdgeInvalidArgumentException("unknown query shape");
+        }
+    }
 }
 
 /// <summary>Nearest query.</summary>

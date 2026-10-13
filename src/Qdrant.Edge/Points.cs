@@ -32,6 +32,15 @@ public sealed record PointVectors
 
     /// <summary>Replacement vector.</summary>
     public required Vector Vector { get; init; }
+
+    /// <summary>Validates id and vector shape.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        ArgumentNullException.ThrowIfNull(Id, nameof(Id));
+        ArgumentNullException.ThrowIfNull(Vector, nameof(Vector));
+        Vector.Validate();
+    }
 }
 
 /// <summary>Sort key attached to a point: integer or float (datetimes as timestamps).</summary>

@@ -27,6 +27,12 @@ public sealed record Prefetch
         EdgeValidation.CheckResultCount("prefetch limit", Limit);
         EdgeValidation.CheckNestingDepth("prefetch", depth);
         Filter?.Validate();
+        Query?.Validate();
+        if (ScoreThreshold is float threshold)
+        {
+            EdgeValidation.CheckFinite(nameof(ScoreThreshold), threshold);
+        }
+
         foreach (Prefetch nested in Prefetches)
         {
             ArgumentNullException.ThrowIfNull(nested, nameof(nested));
@@ -65,6 +71,8 @@ public sealed record SearchRequest
     /// <summary>Validates limit/offset caps and nested shapes.</summary>
     public void Validate()
     {
+        ArgumentNullException.ThrowIfNull(Query, nameof(Query));
+        Query.Validate();
         EdgeValidation.CheckResultCount("limit", Limit);
         if (Offset is ulong offset)
         {
@@ -125,10 +133,7 @@ public sealed record QueryRequest
             prefetch.Validate();
         }
 
-        if (Query is MmrScoringQuery mmr)
-        {
-            mmr.Validate();
-        }
+        Query?.Validate();
 
         if (ScoreThreshold is float threshold)
         {
@@ -209,6 +214,16 @@ public sealed record RetrieveRequest
 
     /// <summary>Optional vector selector.</summary>
     public WithVector? WithVector { get; init; }
+
+    /// <summary>Validates point ids.</summary>
+    public void Validate()
+    {
+        ArgumentNullException.ThrowIfNull(PointIds, nameof(PointIds));
+        foreach (PointId id in PointIds)
+        {
+            ArgumentNullException.ThrowIfNull(id, nameof(id));
+        }
+    }
 }
 
 /// <summary>Count request.</summary>
@@ -219,6 +234,9 @@ public sealed record CountRequest
 
     /// <summary>Whether to count exactly.</summary>
     public bool Exact { get; init; } = true;
+
+    /// <summary>Validates the filter.</summary>
+    public void Validate() => Filter?.Validate();
 }
 
 /// <summary>Facet request over an indexed payload key.</summary>

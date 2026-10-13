@@ -37,6 +37,53 @@ public abstract record ScoringQuery
     /// <summary>Creates a sampling query.</summary>
     /// <param name="sample">Sample strategy.</param>
     public static ScoringQuery CreateSample(Sample sample) => new SampleScoringQuery(sample);
+
+    /// <summary>Validates nested query, formula, and mmr shapes.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        switch (this)
+        {
+            case VectorScoringQuery(var query):
+                ArgumentNullException.ThrowIfNull(query, nameof(query));
+                query.Validate();
+                break;
+            case FusionScoringQuery(var fusion):
+                ArgumentNullException.ThrowIfNull(fusion, nameof(fusion));
+                if (fusion is RrfFusion(var k, var weights) && weights is not null)
+                {
+                    foreach (float weight in weights)
+                    {
+                        EdgeValidation.CheckFinite("rrf weight", weight);
+                    }
+                }
+
+                break;
+            case OrderByScoringQuery(var orderBy):
+                ArgumentNullException.ThrowIfNull(orderBy, nameof(orderBy));
+                ArgumentException.ThrowIfNullOrWhiteSpace(orderBy.Key, nameof(orderBy.Key));
+                EdgeValidation.CheckPayloadKey(orderBy.Key);
+                if (orderBy.StartFrom is FloatStartFrom(var value))
+                {
+                    EdgeValidation.CheckFinite("order-by start_from", value);
+                }
+
+                break;
+            case FormulaScoringQuery(var expression, _):
+                ArgumentNullException.ThrowIfNull(expression, nameof(expression));
+                expression.Validate();
+                break;
+            case MmrScoringQuery mmr:
+                ArgumentNullException.ThrowIfNull(mmr.Vector, nameof(mmr.Vector));
+                mmr.Vector.Validate();
+                mmr.ValidateMmr();
+                break;
+            case SampleScoringQuery:
+                break;
+            default:
+                throw new EdgeInvalidArgumentException("unknown scoring query shape");
+        }
+    }
 }
 
 /// <summary>Vector scoring query.</summary>
@@ -64,7 +111,7 @@ public sealed record FormulaScoringQuery(Expression Expression, IReadOnlyDiction
 public sealed record MmrScoringQuery(NamedVector Vector, float Lambda, ulong CandidatesLimit, string? Using) : ScoringQuery
 {
     /// <summary>Validates lambda range and candidate cap.</summary>
-    public void Validate()
+    public void ValidateMmr()
     {
         EdgeValidation.CheckFinite(nameof(Lambda), Lambda);
         if (Lambda is < 0f or > 1f)

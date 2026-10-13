@@ -131,6 +131,7 @@ public sealed class EdgeShard : IDisposable
     public void SetOptimizersConfig(OptimizersConfig optimizers)
     {
         ArgumentNullException.ThrowIfNull(optimizers, nameof(optimizers));
+        optimizers.Validate();
         CallNative(
             "set_optimizers_config",
             JsonSerializer.Serialize(optimizers, EdgeJsonContext.Default.OptimizersConfig),
@@ -270,6 +271,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(operation, nameof(operation));
         cancellationToken.ThrowIfCancellationRequested();
+        operation.Validate();
         CallNative(
             "update",
             JsonSerializer.Serialize(operation, EdgeJsonContext.Default.UpdateOperation),
@@ -284,6 +286,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "search",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.SearchRequest));
@@ -299,6 +302,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "query",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.QueryRequest));
@@ -314,6 +318,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "query_batch",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.QueryBatchRequest));
@@ -329,6 +334,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "query_groups",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.GroupRequest));
@@ -344,6 +350,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "scroll",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.ScrollRequest));
@@ -359,6 +366,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "retrieve",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.RetrieveRequest));
@@ -374,6 +382,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "count",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.CountRequest));
@@ -388,6 +397,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "facet",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.FacetRequest));
@@ -433,6 +443,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         cancellationToken.ThrowIfCancellationRequested();
+        request.Validate();
         string json = CallNativeRaw(
             "search_matrix",
             JsonSerializer.Serialize(request, EdgeJsonContext.Default.SearchMatrixRequest));

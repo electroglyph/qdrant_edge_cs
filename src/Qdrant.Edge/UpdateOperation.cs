@@ -296,6 +296,126 @@ public abstract record UpdateOperation
         return new DeleteVectorNameOperation(vectorName);
     }
 
+    /// <summary>Validates points, vectors, and filters without trusting factory paths.</summary>
+    /// <remarks>
+    /// Factories validate, but record constructors are public so direct
+    /// construction can bypass them. EdgeShard calls this before dispatch.
+    /// </remarks>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        switch (this)
+        {
+            case UpsertPointsOperation(var points, var condition, _):
+                ArgumentNullException.ThrowIfNull(points, nameof(points));
+                foreach (Point point in points)
+                {
+                    ArgumentNullException.ThrowIfNull(point, nameof(point));
+                    point.Validate();
+                }
+
+                condition?.Validate();
+                break;
+            case DeletePointsOperation(var pointIds):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                foreach (PointId id in pointIds)
+                {
+                    ArgumentNullException.ThrowIfNull(id, nameof(id));
+                }
+
+                break;
+            case DeletePointsByFilterOperation(var filter):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                filter.Validate();
+                break;
+            case UpdateVectorsOperation(var vectors, var condition):
+                ArgumentNullException.ThrowIfNull(vectors, nameof(vectors));
+                foreach (PointVectors pointVectors in vectors)
+                {
+                    ArgumentNullException.ThrowIfNull(pointVectors, nameof(pointVectors));
+                    pointVectors.Validate();
+                }
+
+                condition?.Validate();
+                break;
+            case DeleteVectorsByFilterOperation(var filter, var names):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                ArgumentNullException.ThrowIfNull(names, nameof(names));
+                filter.Validate();
+                break;
+            case DeleteVectorsOperation(var pointIds, var names):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                ArgumentNullException.ThrowIfNull(names, nameof(names));
+                foreach (PointId id in pointIds)
+                {
+                    ArgumentNullException.ThrowIfNull(id, nameof(id));
+                }
+
+                break;
+            case SetPayloadOperation(var pointIds, var payloadJson, _):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                ArgumentException.ThrowIfNullOrWhiteSpace(payloadJson, nameof(payloadJson));
+                break;
+            case SetPayloadByFilterOperation(var filter, var payloadJson, _):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                ArgumentException.ThrowIfNullOrWhiteSpace(payloadJson, nameof(payloadJson));
+                filter.Validate();
+                break;
+            case OverwritePayloadOperation(var pointIds, var payloadJson):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                ArgumentException.ThrowIfNullOrWhiteSpace(payloadJson, nameof(payloadJson));
+                break;
+            case OverwritePayloadByFilterOperation(var filter, var payloadJson):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                ArgumentException.ThrowIfNullOrWhiteSpace(payloadJson, nameof(payloadJson));
+                filter.Validate();
+                break;
+            case DeletePayloadOperation(var pointIds, var keys):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                ArgumentNullException.ThrowIfNull(keys, nameof(keys));
+                break;
+            case DeletePayloadByFilterOperation(var filter, var keys):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                ArgumentNullException.ThrowIfNull(keys, nameof(keys));
+                filter.Validate();
+                break;
+            case ClearPayloadOperation(var pointIds):
+                ArgumentNullException.ThrowIfNull(pointIds, nameof(pointIds));
+                break;
+            case ClearPayloadByFilterOperation(var filter):
+                ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+                filter.Validate();
+                break;
+            case CreateFieldIndexOperation(var fieldName, _):
+                ArgumentException.ThrowIfNullOrWhiteSpace(fieldName, nameof(fieldName));
+                break;
+            case CreateFieldIndexWithParamsOperation(var fieldName, var indexParams):
+                ArgumentException.ThrowIfNullOrWhiteSpace(fieldName, nameof(fieldName));
+                ArgumentNullException.ThrowIfNull(indexParams, nameof(indexParams));
+                if (indexParams is IntegerPayloadIndex(var integer))
+                {
+                    integer.Validate();
+                }
+
+                break;
+            case DeleteFieldIndexOperation(var fieldName):
+                ArgumentException.ThrowIfNullOrWhiteSpace(fieldName, nameof(fieldName));
+                break;
+            case CreateDenseVectorOperation(var vectorName, var size, _, _, _):
+                ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
+                EdgeValidation.CheckVectorSize(vectorName, size);
+                break;
+            case CreateSparseVectorOperation(var vectorName, _, _):
+                ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
+                break;
+            case DeleteVectorNameOperation(var vectorName):
+                ArgumentNullException.ThrowIfNull(vectorName, nameof(vectorName));
+                break;
+            default:
+                throw new EdgeInvalidArgumentException("unknown update operation shape");
+        }
+    }
+
     /// <inheritdoc />
     public override string ToString() => $"UpdateOperation({Kind})";
 }
