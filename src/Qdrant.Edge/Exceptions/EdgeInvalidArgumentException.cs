@@ -9,4 +9,12 @@ public sealed class EdgeInvalidArgumentException : EdgeException
         : base(reason)
     {
     }
+
+    /// <summary>Initializes a new instance with a reason and inner cause.</summary>
+    /// <param name="reason">Why the argument is invalid.</param>
+    /// <param name="inner">Serialization cause.</param>
+    public EdgeInvalidArgumentException(string reason, Exception? inner)
+        : base(reason, inner)
+    {
+    }
 }

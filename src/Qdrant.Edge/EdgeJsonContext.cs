@@ -139,4 +139,22 @@ namespace Qdrant.Edge;
 [JsonSerializable(typeof(ulong))]
 internal sealed partial class EdgeJsonContext : JsonSerializerContext
 {
+    /// <summary>
+    /// Context with a raised JSON depth cap (256). <see cref="Default"/> ships
+    /// frozen at the 64-deep default, which a valid 64-deep prefetch/filter
+    /// tree exceeds in JSON terms, so all native-bound JSON goes through here;
+    /// the 64-deep engine cap, not the serializer, decides. Settings mirror
+    /// <see cref="Default"/> via the copy constructor.
+    /// </summary>
+    internal static EdgeJsonContext Deep => DeepHolder.Value;
+
+    private static readonly Lazy<EdgeJsonContext> DeepHolder = new(CreateDeep);
+
+    private static EdgeJsonContext CreateDeep()
+    {
+        // Deferred past the type initializer because Default is still null
+        // while static field initializers run. The copy constructor reads
+        // from the frozen Default options without mutating them.
+        return new(new JsonSerializerOptions(Default.Options) { MaxDepth = 256 });
+    }
 }

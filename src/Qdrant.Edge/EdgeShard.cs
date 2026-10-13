@@ -61,7 +61,7 @@ public sealed class EdgeShard : IDisposable
         ArgumentNullException.ThrowIfNull(config, nameof(config));
         cancellationToken.ThrowIfCancellationRequested();
         config.Validate();
-        return CreateCore(path, JsonSerializer.Serialize(config, EdgeJsonContext.Default.EdgeConfig), configJsonRequired: true);
+        return CreateCore(path, JsonSerializer.Serialize(config, EdgeJsonContext.Deep.EdgeConfig), configJsonRequired: true);
     }
 
     /// <summary>Opens an existing shard at <paramref name="path"/>, or creates one when <paramref name="config"/> is given.</summary>
@@ -76,13 +76,13 @@ public sealed class EdgeShard : IDisposable
         config?.Validate();
         string? configJson = config is null
             ? null
-            : JsonSerializer.Serialize(config, EdgeJsonContext.Default.EdgeConfig);
+            : JsonSerializer.Serialize(config, EdgeJsonContext.Deep.EdgeConfig);
         return LoadCore(path, configJson);
     }
 
     /// <summary>Flushes the WAL and segments to disk synchronously.</summary>
     /// <exception cref="ShardClosedException">When the shard is unloaded.</exception>
-    public void Flush() => CallNative("flush", null, EdgeJsonContext.Default.Object);
+    public void Flush() => CallNative("flush", null, EdgeJsonContext.Deep.Object);
 
     /// <summary>Runs segment optimizers to completion. Returns true when work was done.</summary>
     /// <returns>True when any segment was optimized.</returns>
@@ -90,7 +90,7 @@ public sealed class EdgeShard : IDisposable
     public bool Optimize()
     {
         string json = CallNativeRaw("optimize", null);
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.Boolean);
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.Boolean);
     }
 
     /// <summary>Returns the config the shard was loaded or created with.</summary>
@@ -99,7 +99,7 @@ public sealed class EdgeShard : IDisposable
     public EdgeConfig GetConfig()
     {
         string json = CallNativeRaw("config", null);
-        EdgeConfig? config = JsonSerializer.Deserialize(json, EdgeJsonContext.Default.EdgeConfig);
+        EdgeConfig? config = JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.EdgeConfig);
         return config ?? throw new EdgeOperationException("engine returned an empty config");
     }
 
@@ -109,7 +109,7 @@ public sealed class EdgeShard : IDisposable
     {
         ArgumentNullException.ThrowIfNull(hnsw, nameof(hnsw));
         hnsw.Validate("hnsw config");
-        CallNative("set_hnsw_config", JsonSerializer.Serialize(hnsw, EdgeJsonContext.Default.HnswIndexConfig), EdgeJsonContext.Default.Object);
+        CallNative("set_hnsw_config", SerializeRequest(hnsw, EdgeJsonContext.Deep.HnswIndexConfig), EdgeJsonContext.Deep.Object);
     }
 
     /// <summary>Sets the HNSW configuration of one named vector field.</summary>
@@ -122,8 +122,8 @@ public sealed class EdgeShard : IDisposable
         hnsw.Validate($"vector field {vectorName}");
         CallNative(
             "set_vector_hnsw_config",
-            JsonSerializer.Serialize(new VectorHnswRequest(vectorName, hnsw), EdgeJsonContext.Default.VectorHnswRequest),
-            EdgeJsonContext.Default.Object);
+            SerializeRequest(new VectorHnswRequest(vectorName, hnsw), EdgeJsonContext.Deep.VectorHnswRequest),
+            EdgeJsonContext.Deep.Object);
     }
 
     /// <summary>Sets the optimizer configuration and persists it.</summary>
@@ -134,8 +134,8 @@ public sealed class EdgeShard : IDisposable
         optimizers.Validate();
         CallNative(
             "set_optimizers_config",
-            JsonSerializer.Serialize(optimizers, EdgeJsonContext.Default.OptimizersConfig),
-            EdgeJsonContext.Default.Object);
+            SerializeRequest(optimizers, EdgeJsonContext.Deep.OptimizersConfig),
+            EdgeJsonContext.Deep.Object);
     }
 
     /// <summary>Returns the snapshot manifest as a JSON string.</summary>
@@ -162,8 +162,8 @@ public sealed class EdgeShard : IDisposable
         CallNative(
             "update_from_snapshot",
             JsonSerializer.Serialize(
-                new SnapshotRequest(snapshotPath, tmpDir), EdgeJsonContext.Default.SnapshotRequest),
-            EdgeJsonContext.Default.Object);
+                new SnapshotRequest(snapshotPath, tmpDir), EdgeJsonContext.Deep.SnapshotRequest),
+            EdgeJsonContext.Deep.Object);
     }
 
     /// <summary>Unpacks a snapshot archive into <paramref name="targetPath"/>.</summary>
@@ -180,7 +180,7 @@ public sealed class EdgeShard : IDisposable
         }
 
         string request = JsonSerializer.Serialize(
-            new UnpackRequest(snapshotPath, targetPath), EdgeJsonContext.Default.UnpackRequest);
+            new UnpackRequest(snapshotPath, targetPath), EdgeJsonContext.Deep.UnpackRequest);
         nint responsePtr = nint.Zero;
         QdrantEdgeStatus status;
         try
@@ -274,8 +274,8 @@ public sealed class EdgeShard : IDisposable
         operation.Validate();
         CallNative(
             "update",
-            JsonSerializer.Serialize(operation, EdgeJsonContext.Default.UpdateOperation),
-            EdgeJsonContext.Default.Object);
+            SerializeRequest(operation, EdgeJsonContext.Deep.UpdateOperation),
+            EdgeJsonContext.Deep.Object);
     }
 
     /// <summary>Runs a vector-only search. Deprecated in edge-core; prefer <see cref="Query"/>.</summary>
@@ -289,8 +289,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "search",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.SearchRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.ScoredPointArray)
+            SerializeRequest(request, EdgeJsonContext.Deep.SearchRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.ScoredPointArray)
             ?? throw new EdgeOperationException("engine returned an empty search response");
     }
 
@@ -305,8 +305,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "query",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.QueryRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.ScoredPointArray)
+            SerializeRequest(request, EdgeJsonContext.Deep.QueryRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.ScoredPointArray)
             ?? throw new EdgeOperationException("engine returned an empty query response");
     }
 
@@ -321,8 +321,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "query_batch",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.QueryBatchRequest));
-        ScoredPoint[][]? batches = JsonSerializer.Deserialize(json, EdgeJsonContext.Default.ScoredPointArrayArray);
+            SerializeRequest(request, EdgeJsonContext.Deep.QueryBatchRequest));
+        ScoredPoint[][]? batches = JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.ScoredPointArrayArray);
         return batches ?? throw new EdgeOperationException("engine returned an empty batch response");
     }
 
@@ -337,8 +337,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "query_groups",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.GroupRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.GroupArray)
+            SerializeRequest(request, EdgeJsonContext.Deep.GroupRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.GroupArray)
             ?? throw new EdgeOperationException("engine returned an empty groups response");
     }
 
@@ -353,8 +353,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "scroll",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.ScrollRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.ScrollResponse)
+            SerializeRequest(request, EdgeJsonContext.Deep.ScrollRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.ScrollResponse)
             ?? throw new EdgeOperationException("engine returned an empty scroll response");
     }
 
@@ -369,8 +369,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "retrieve",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.RetrieveRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.RecordArray)
+            SerializeRequest(request, EdgeJsonContext.Deep.RetrieveRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.RecordArray)
             ?? throw new EdgeOperationException("engine returned an empty retrieve response");
     }
 
@@ -385,8 +385,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "count",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.CountRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.UInt64);
+            SerializeRequest(request, EdgeJsonContext.Deep.CountRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.UInt64);
     }
 
     /// <summary>Runs a facet aggregation over an indexed payload key.</summary>
@@ -400,15 +400,15 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "facet",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.FacetRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.FacetResponse)
+            SerializeRequest(request, EdgeJsonContext.Deep.FacetRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.FacetResponse)
             ?? throw new EdgeOperationException("engine returned an empty facet response");
     }
 
     /// <summary>Returns summary information about the shard.</summary>
     /// <returns>Shard statistics.</returns>
     public ShardInfo GetInfo() => JsonSerializer.Deserialize(
-        CallNativeRaw("info", null), EdgeJsonContext.Default.ShardInfo)
+        CallNativeRaw("info", null), EdgeJsonContext.Deep.ShardInfo)
         ?? throw new EdgeOperationException("engine returned an empty info response");
 
     /// <summary>Runs an async query by offloading the sync engine call.</summary>
@@ -446,8 +446,8 @@ public sealed class EdgeShard : IDisposable
         request.Validate();
         string json = CallNativeRaw(
             "search_matrix",
-            JsonSerializer.Serialize(request, EdgeJsonContext.Default.SearchMatrixRequest));
-        return JsonSerializer.Deserialize(json, EdgeJsonContext.Default.SearchMatrixResponse)
+            SerializeRequest(request, EdgeJsonContext.Deep.SearchMatrixRequest));
+        return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.SearchMatrixResponse)
             ?? throw new EdgeOperationException("engine returned an empty matrix response");
     }
 #endif
@@ -511,6 +511,22 @@ public sealed class EdgeShard : IDisposable
         lock (_gate)
         {
             return CallNativeLocked(method, requestJson);
+        }
+    }
+
+    private static string SerializeRequest<T>(T value, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> typeInfo)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(value, typeInfo);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            throw new EdgeInvalidArgumentException($"request serialization failed: {ex.Message}", ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new EdgeInvalidArgumentException($"request exceeds JSON depth limit: {ex.Message}", ex);
         }
     }
 
