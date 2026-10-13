@@ -1,0 +1,32 @@
+[workspace]
+
+[package]
+name = "qdrant-edge-cabi"
+# Tracks the native Edge SDK line, equal to `qdrant-edge-ffi` and the C#
+# `NativeLoader.ExpectedVersion`. Bump together by hand (see ffi/Cargo.toml).
+version = "0.8.0"
+authors = ["Qdrant Team <info@qdrant.tech>"]
+license = "Apache-2.0"
+edition = "2024"
+
+[lib]
+# The C# side loads this by a fixed name (`NativeMethods.LibraryName`), so the
+# cdylib must be `libqdrant_edge.so` / `qdrant_edge.dll`, not the package name.
+name = "qdrant_edge"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Engine sources live in a sibling checkout of the Qdrant workspace
+# (`../../../qdrant`). That checkout must be present to build; this crate
+# intentionally stays out of its workspace so the upstream repo is untouched.
+edge = { path = "../../../qdrant/lib/edge" }
+segment = { path = "../../../qdrant/lib/segment", default-features = false }
+# default-features = false drops shard's `default = ["api"]` (the gRPC/prost
+# `api` types crate), which this crate never uses — matching the `edge` and
+# `edge-ffi` crates. `tokio` remains: `common` uses it for snapshot tar
+# extraction and budget semaphores.
+shard = { path = "../../../qdrant/lib/shard", default-features = false }
+sparse = { path = "../../../qdrant/lib/sparse" }
+
+serde_json = { version = "~1.0", features = ["preserve_order"] }
+uuid = { version = "1.23", features = ["v4", "serde"] }

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AssemblyName>Qdrant.Edge</AssemblyName>
+    <RootNamespace>Qdrant.Edge</RootNamespace>
+    <PackageId>Qdrant.Edge</PackageId>
+    <Version>0.8.0</Version>
+    <Authors>Qdrant Team</Authors>
+    <Description>Idiomatic C# interface for qdrant_edge (embedded single-shard vector search). Native engine via stable C ABI; managed DTOs with source-generated JSON.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>
