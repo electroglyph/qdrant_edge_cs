@@ -2,9 +2,10 @@
 
 [package]
 name = "qdrant-edge-cabi"
-# Tracks the native Edge SDK line, equal to `qdrant-edge-ffi` and the C#
-# `NativeLoader.ExpectedVersion`. Bump together by hand (see ffi/Cargo.toml).
-version = "0.8.0"
+# Binding release line, equal to the C# `NativeLoader.ExpectedVersion`.
+# The underlying engine (`qdrant-edge-ffi`, see ffi/Cargo.toml) stays on its
+# own line; bump together by hand when the engine moves.
+version = "0.9.0"
 authors = ["Qdrant Team <info@qdrant.tech>"]
 license = "Apache-2.0"
 edition = "2024"

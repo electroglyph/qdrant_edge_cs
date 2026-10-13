@@ -1,7 +1,7 @@
 # Qdrant.Edge (qdrant_edge_cs)
 
 Idiomatic C# interface for `qdrant_edge` (embedded single-shard vector search).
-Version `0.8.0`, synced with `ffi` / `python` / `amalgamate.py`.
+Version `0.9.0`; native engine line `0.8.0`, synced with `ffi` / `python` / `amalgamate.py`.
 
 ## Layout
 

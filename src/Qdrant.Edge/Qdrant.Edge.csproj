@@ -11,7 +11,7 @@
     <AssemblyName>Qdrant.Edge</AssemblyName>
     <RootNamespace>Qdrant.Edge</RootNamespace>
     <PackageId>Qdrant.Edge</PackageId>
-    <Version>0.8.0</Version>
+    <Version>0.9.0</Version>
     <Authors>Qdrant Team</Authors>
     <Description>Idiomatic C# interface for qdrant_edge (embedded single-shard vector search). Native engine via stable C ABI; managed DTOs with source-generated JSON.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
