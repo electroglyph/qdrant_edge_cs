@@ -126,15 +126,15 @@ public abstract record Condition
     /// <returns>Nesting depth of this branch.</returns>
     public uint Depth() => this switch
     {
-        FieldConditionClause => 1,
-        IsEmptyCondition => 1,
-        IsNullCondition => 1,
-        HasIdCondition => 1,
-        HasVectorCondition => 1,
-        SliceCondition => 1,
+        FieldConditionClause => 0,
+        IsEmptyCondition => 0,
+        IsNullCondition => 0,
+        HasIdCondition => 0,
+        HasVectorCondition => 0,
+        SliceCondition => 0,
         NestedCondition(var key, var filter) => 1 + filter.Depth(),
         FilterCondition(var filter) => 1 + filter.Depth(),
-        _ => 1,
+        _ => 0,
     };
 
     /// <summary>Validates shape (slice bounds, key presence).</summary>
@@ -238,7 +238,7 @@ public sealed record Filter
     /// <returns>Maximum branch depth.</returns>
     public uint Depth()
     {
-        uint deepest = 1;
+        uint deepest = 0;
         foreach (Condition condition in AllConditions())
         {
             deepest = Math.Max(deepest, condition.Depth());
