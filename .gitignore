@@ -320,6 +320,16 @@ OpenCover/
 # Azure Stream Analytics local run output 
 ASALocalRun/
 
+# Rust build output
+target/
+
+# Prebuilt native engine libraries (CI artifacts: rebuild via native/cabi,
+# never commit binaries)
+*.so
+*.dylib
+*.dll
+*.lib
+
 # MSBuild Binary and Structured Log
 *.binlog
 

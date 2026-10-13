@@ -1,0 +1,4 @@
+[submodule "third_party/qdrant"]
+	path = third_party/qdrant
+	url = https://github.com/qdrant/qdrant.git
+	shallow = true

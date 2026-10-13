@@ -12,11 +12,22 @@ Version `0.8.0`, synced with `ffi` / `python` / `amalgamate.py`.
 
 ## Native library
 
-The engine stays in Rust. Build the planned `lib/edge/cabi/` crate as
-`qdrant_edge` (`cdylib`) and ship per-RID assets under
-`runtimes/{linux-x64,linux-arm64,osx-x64,osx-arm64,win-x64,win-arm64}/native/`.
-Without it, `EdgeShard.Create/Load` throws `EdgeOperationException` and the
-lifecycle tests assert that behavior.
+The engine stays in Rust. `native/cabi/` (`qdrant-edge-cabi`, `cdylib` named
+`qdrant_edge`) exposes the JSON-in/JSON-out C ABI over the engine sources in
+the pinned `third_party/qdrant` submodule (qdrant @ `016542aa` — the ABI
+depends on its engine types, so the pin is load-bearing). Clone with
+`git clone --recurse-submodules`, then:
+
+```sh
+cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml
+```
+
+and copy the output per RID under
+`runtimes/{linux-x64,linux-arm64,osx-x64,osx-arm64,win-x64,win-arm64}/native/`
+(e.g. `libqdrant_edge.so` for `linux-x64`), next to the consuming app —
+the test and Demo bins each need their own copy. The `.so`/`.dll` files are
+CI artifacts and are git-ignored; without one, `EdgeShard.Create/Load`
+throws `EdgeOperationException` and the lifecycle tests assert that behavior.
 
 ## Lifecycle
 
