@@ -22,7 +22,7 @@ public sealed record Prefetch
     public SearchParams? Params { get; init; }
 
     /// <summary>Validates limit, depth, and nested branches.</summary>
-    public void Validate(uint depth = 1)
+    public void Validate(uint depth = 0)
     {
         EdgeValidation.CheckResultCount("prefetch limit", Limit);
         EdgeValidation.CheckNestingDepth("prefetch", depth);

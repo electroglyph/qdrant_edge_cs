@@ -571,8 +571,8 @@ fn with_payload_or_default(v: &Value) -> Result<edge::WithPayloadInterface> {
 
 /// Parse a C# `NamedVector` into the engine query vector. The shared parser
 /// yields the persisted form; the uniform-shape conversion into the query
-/// form is infallible here because the parser already enforced non-empty,
-/// uniform, finite vectors.
+/// form is infallible here because the parser already enforced the 1..=65536
+/// length bounds and non-empty, uniform, finite vectors.
 fn parse_query_vector(v: &Value) -> Result<edge::VectorInternal> {
     Ok(super::types::parse_named_vector(v)?.into())
 }
