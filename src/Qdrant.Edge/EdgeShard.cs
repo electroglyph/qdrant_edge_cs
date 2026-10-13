@@ -208,17 +208,23 @@ public sealed class EdgeShard : IDisposable
                 return;
             }
 
+            EdgeOperationException? flushError = null;
             try
             {
                 CallNativeLocked("flush", null);
             }
-            catch (EdgeOperationException)
+            catch (EdgeOperationException ex)
             {
-                return;
+                flushError = ex;
             }
 
             _handle.Dispose();
             _handle = null;
+
+            if (flushError is not null)
+            {
+                throw flushError;
+            }
         }
     }
 
@@ -231,11 +237,29 @@ public sealed class EdgeShard : IDisposable
             {
                 return;
             }
-
-            _disposed = true;
         }
 
-        Unload();
+        try
+        {
+            Unload();
+        }
+        catch (EdgeOperationException)
+        {
+            // Unload already released the handle even when flush failed.
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _disposed = true;
+                if (_handle is not null)
+                {
+                    _handle.Dispose();
+                    _handle = null;
+                }
+            }
+        }
+
         GC.SuppressFinalize(this);
     }
 
