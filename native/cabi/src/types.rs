@@ -29,6 +29,23 @@ fn reject_non_finite(values: &[f32], ctx: &str) -> Result<()> {
     Ok(())
 }
 
+/// Dense vector dimension bounds shared by the config and data paths
+/// (1..=65536). The engine reports a wrong-sized vector as an `OperationError`
+/// (dimension mismatch), so the data path must reject empty and oversize
+/// vectors here to surface `InvalidArgument` like the C# factory does.
+const MIN_DENSE_LEN: usize = 1;
+const MAX_DENSE_LEN: usize = 65_536;
+
+fn check_dense_len(values: &[f32], ctx: &str) -> Result<()> {
+    if values.len() < MIN_DENSE_LEN || values.len() > MAX_DENSE_LEN {
+        return Err(ApiError::invalid_argument(format!(
+            "{ctx} has {} elements, expected {MIN_DENSE_LEN}..={MAX_DENSE_LEN}",
+            values.len(),
+        )));
+    }
+    Ok(())
+}
+
 fn validate_multi_dense(vectors: &[Vec<f32>], ctx: &str) -> Result<()> {
     if vectors.is_empty() {
         return Err(ApiError::invalid_argument(format!(
@@ -39,6 +56,11 @@ fn validate_multi_dense(vectors: &[Vec<f32>], ctx: &str) -> Result<()> {
     if dim == 0 {
         return Err(ApiError::invalid_argument(format!(
             "{ctx} multi-vector has zero dimension"
+        )));
+    }
+    if dim > MAX_DENSE_LEN {
+        return Err(ApiError::invalid_argument(format!(
+            "{ctx} multi-vector dimension {dim} exceeds the maximum of {MAX_DENSE_LEN}"
         )));
     }
     for (i, v) in vectors.iter().enumerate() {
@@ -171,6 +193,7 @@ pub(crate) fn parse_named_vector(v: &Value) -> Result<edge::VectorPersisted> {
         "dense" => {
             let values = f32_array(required(v, "Values", ctx)?, "dense vector")?;
             reject_non_finite(&values, "dense vector")?;
+            check_dense_len(&values, "dense vector")?;
             Ok(edge::VectorPersisted::Dense(values))
         }
         "sparse" => {
@@ -198,6 +221,7 @@ pub(crate) fn parse_vector(v: &Value) -> Result<edge::VectorStructPersisted> {
         "single" => {
             let values = f32_array(required(v, "Values", ctx)?, "dense vector")?;
             reject_non_finite(&values, "dense vector")?;
+            check_dense_len(&values, "dense vector")?;
             Ok(edge::VectorStructPersisted::Single(values))
         }
         "multi_dense" => {
@@ -547,6 +571,18 @@ mod tests {
     fn parse_vector_single_rejects_non_finite() {
         let err = parse_vector(&json!({"kind": "single", "Values": [1.0, 1e40]})).unwrap_err();
         assert!(err.message.contains("must be a finite number"), "{err:?}");
+    }
+
+    #[test]
+    fn parse_vector_single_rejects_empty_and_oversize() {
+        let err = parse_vector(&json!({"kind": "single", "Values": []})).unwrap_err();
+        assert!(err.message.contains("1..=65536"), "{err:?}");
+        let err = parse_named_vector(&json!({"kind": "dense", "Values": []})).unwrap_err();
+        assert!(err.message.contains("1..=65536"), "{err:?}");
+        let huge = vec![1.0; 65_537];
+        let err =
+            parse_vector(&json!({"kind": "single", "Values": huge})).unwrap_err();
+        assert!(err.message.contains("1..=65536"), "{err:?}");
     }
 
     #[test]

@@ -17,7 +17,12 @@ public abstract record Vector
 
     /// <summary>Creates a named vector map.</summary>
     /// <param name="map">Vector name to value.</param>
-    public static Vector Named(IReadOnlyDictionary<string, NamedVector> map) => new NamedVectorMap(map);
+    public static Vector Named(IReadOnlyDictionary<string, NamedVector> map)
+    {
+        Vector candidate = new NamedVectorMap(map);
+        candidate.Validate();
+        return candidate;
+    }
 
     /// <summary>Validates sizes, ragged shapes, and finiteness.</summary>
     /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
