@@ -16,7 +16,8 @@ The engine stays in Rust. `native/cabi/` (`qdrant-edge-cabi`, `cdylib` named
 `qdrant_edge`) exposes the JSON-in/JSON-out C ABI over the engine sources in
 the pinned `third_party/qdrant` submodule (qdrant @ `016542aa` — the ABI
 depends on its engine types, so the pin is load-bearing). Clone with
-`git clone --recurse-submodules`, then:
+`git clone --recurse-submodules https://github.com/electroglyph/qdrant_edge_cs.git`,
+then:
 
 ```sh
 cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml
