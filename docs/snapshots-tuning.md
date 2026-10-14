@@ -17,8 +17,12 @@ files of a flushed shard directory in these examples.
   state). `tmpDir` defaults to the snapshot parent when null.
 - `EdgeShard.UnpackSnapshot(snapshotPath, targetPath)` is static and unpacks
   without a live shard.
-- If a full recovery fails after the data directory was cleared, the shard
-  is left unloaded and later ops throw `ShardClosedException`.
+- A failed recovery keeps the shard usable in memory: the C ABI swaps the
+  engine back under the same handle only on success, so a failure leaves
+  the previous engine registered (unlike FFI, which unloads the shard on a
+  failed full recovery after clearing the data directory). Either recovery
+  mode can still leave the on-disk directory half-merged — recover from a
+  full snapshot to return to a known-good state.
 - `Optimize()` runs segment optimizers and returns `true` when work was
   done. `SetHnswConfig` / `SetVectorHnswConfig` / `SetOptimizersConfig`
   persist tuning changes; `Flush()` persists WAL + segments.
@@ -76,7 +80,7 @@ catch (EdgeException ex)
 The manifest string is opaque: parse it as JSON but do not depend on its
 fields. `tmpDir` null would default to the archive parent.
 
-## Partial merge is not atomic; full failure leaves the shard unloaded
+## Neither recovery mode is atomic; a failed recovery keeps the shard usable
 
 ```csharp
 try
@@ -96,21 +100,24 @@ try
 catch (EdgeException)
 {
     Console.WriteLine("Snapshot failed; recover from a full snapshot for a known-good state.");
-}```
+}
+```
 
-A failed full recovery after the directory was cleared leaves the shard
-unloaded:
+A failed recovery leaves the previous engine in place, so the shard stays
+usable in memory; the on-disk directory may still need a full snapshot to
+reach a known-good state:
 
 ```csharp
-// After such a failure, later ops throw:
+// After such a failure, the shard is still usable:
 try
 {
-    shard.Count(new CountRequest { Exact = true });
+    shard.UpdateFromSnapshot("/nonexistent/snap.tar");
 }
-catch (ShardClosedException)
+catch (EdgeException)
 {
-    Console.WriteLine("Unloaded shard throws ShardClosedException.");
+    Console.WriteLine("Snapshot failed; recovering from a full snapshot for a known-good state.");
 }
+Console.WriteLine($"Shard still usable: {shard.Count(new CountRequest { Exact = true })}");
 ```
 
 ## Optimize, setters, and flush discipline
@@ -160,8 +167,9 @@ returns empty nearest lists. Cost grows quadratically; keep samples small.
   fields for logic.
 - Assuming a partial merge is atomic: it merges in place; on failure,
   restore from a full snapshot.
-- Calling other ops after a failed full recovery and expecting data: the
-  shard is unloaded; reopen or restore first.
+- Calling other ops after a failed recovery and expecting a `ShardClosedException`:
+  the C ABI keeps the previous engine registered, so the shard stays usable
+  in memory; restore from a full snapshot to fix the on-disk state.
 - Using `SearchMatrix` without the experimental opt-in: the call site must
   disable `QDRANT_EDGE_MATRIX` or document the O(n^2) opt-in.
 

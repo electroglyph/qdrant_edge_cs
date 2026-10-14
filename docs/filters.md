@@ -84,7 +84,7 @@ SliceCondition sliceRecord = new(2, 1);
 Condition nested = Condition.Nested("arrays", new Filter { Must = [field] });
 Condition nestedFilter = Condition.NestedFilter(new Filter { Must = [field] });
 
-foreach (Condition each in [field, isEmpty, isNull, hasId, hasVector, slice, nested, nestedFilter])
+foreach (Condition each in (Condition[])[field, isEmpty, isNull, hasId, hasVector, slice, nested, nestedFilter])
 {
     Filter probe = new() { Must = [each] };
     Console.WriteLine($"{each.GetType().Name}: {shard.Count(new CountRequest { Filter = probe })}");
@@ -169,7 +169,7 @@ FieldCondition countBand = new()
     Key = "tags",
     ValuesCount = new ValuesCount { Gte = 1, Lt = 5 },
 };
-foreach (FieldCondition each in [rangeAll, rangeOpen, countBand])
+foreach (FieldCondition each in (FieldCondition[])[rangeAll, rangeOpen, countBand])
 {
     each.Validate();
 }

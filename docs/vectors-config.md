@@ -115,7 +115,7 @@ multiShard.Update(UpdateOperation.UpsertPoints(
     new Point { Id = PointId.FromNumber(1), Vector = Vector.MultiDense([[1f, 2f], [3f, 4f]]) },
 ]));
 
-foreach (Vector bad in
+foreach (Vector bad in (Vector[])
     [
         Vector.MultiDense([]),
         Vector.MultiDense([[]]),
@@ -168,7 +168,7 @@ ProductQuantization productRecord = new(new ProductQuantizationParams { Compress
 BinaryQuantization binaryRecord = new(new BinaryQuantizationParams { });
 TurboQuantization turboRecord = new(new TurboQuantizationParams { Bits = TurboQuantBitSize.Bits1Point5 });
 
-foreach (QuantizationConfig each in [scalar, product, binary, turbo])
+foreach (QuantizationConfig each in (QuantizationConfig[])[scalar, product, binary, turbo])
 {
     EdgeConfig quantized = new()
     {

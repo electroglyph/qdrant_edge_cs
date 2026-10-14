@@ -73,7 +73,7 @@ then invalid-argument, then operation.
 | `FieldCondition` | exactly one predicate | `FieldCondition.Validate` |
 | `IntegerIndexParams` | not (`Lookup: false` + `Range: false`) | `IntegerIndexParams.Validate` |
 | Sparse lengths | `Indices.Count == Values.Count` | `SparseVector.Validate` |
-| Floats (vectors, payload-adjacent scalars, scores, weights) | finite (no NaN/±Inf) | `CheckFinite` |
+| Floats (dense, multi-dense, sparse, and named vector values; feedback scores and coefficients; RRF weights; MMR lambda; decay scale/midpoint; div fallback; float order-by start-from; geo point/radius; score thresholds) | finite (no NaN/±Inf) | `CheckFinite` |
 
 ## One failing example per row (with exception type)
 
@@ -120,7 +120,7 @@ Prefetch DeepPrefetch(int depth)
 new QueryRequest { Limit = 1, Prefetches = [DeepPrefetch(64)] }.Validate();
 ExpectInvalid(() => new QueryRequest { Limit = 1, Prefetches = [DeepPrefetch(65)] }.Validate(), "prefetch 66");
 
-// Formula 10,001 nodes fails.
+// Formula 10,002 nodes (10,001 terms plus the Sum node) fails.
 ExpectInvalid(() =>
 {
     List<Expression> terms = Enumerable.Range(0, 10_001).Select(_ => Expression.Constant(1f)).ToList();

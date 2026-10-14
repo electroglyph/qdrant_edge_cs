@@ -52,7 +52,7 @@ Query feedback = Query.CreateFeedback(
     [new FeedbackItem { Vector = NamedVector.Dense(vecA), Score = 1.0f }],
     new FeedbackCoefficients { A = 1.0f, B = 0.5f, C = 0.25f });
 
-foreach (Query each in [nearest, recommendDefault, recommendBest, recommendSum, discover, context, feedback])
+foreach (Query each in (Query[])[nearest, recommendDefault, recommendBest, recommendSum, discover, context, feedback])
 {
     IReadOnlyList<ScoredPoint> hits = shard.Query(new QueryRequest
     {
@@ -113,7 +113,7 @@ OrderBy byDatetime = new()
     Direction = Direction.Asc,
     StartFrom = new DatetimeStartFrom("2024-01-01T00:00:00Z"),
 };
-foreach (OrderBy order in [byInt, byFloat, byDatetime])
+foreach (OrderBy order in (OrderBy[])[byInt, byFloat, byDatetime])
 {
     IReadOnlyList<ScoredPoint> hits = shard.Query(new QueryRequest
     {
@@ -171,7 +171,7 @@ ScoringQuery divGuarded = ScoringQuery.Formula(
 ConstantExpression constantRecord = new(1f);
 VariableExpression variableRecord = new("$score");
 
-foreach (ScoringQuery formula in [sumBaseline, withDefaults, decayLin, decayGauss, decayExp, divGuarded])
+foreach (ScoringQuery formula in (ScoringQuery[])[sumBaseline, withDefaults, decayLin, decayGauss, decayExp, divGuarded])
 {
     FormulaScoringQuery asRecord = (FormulaScoringQuery)formula;
     Console.WriteLine($"Formula {asRecord.Expression.Kind}: size={asRecord.Expression.Size}");

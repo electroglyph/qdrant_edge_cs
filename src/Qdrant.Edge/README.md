@@ -60,7 +60,7 @@ operations throw `ShardClosedException`.
 
 ## Keyword renames (FFI/Python parity)
 
-- `Mmr.Lambda` (Python `lambda_`), `ExceptMatch.Except` (Python `except_`).
+- `MmrScoringQuery.Lambda` (Python `lambda_`), `ExceptMatch.Except` (Python `except_`).
 - FFI `create_field_index` + `create_field_index_with_params` split is kept;
   Python merges them into one union.
 - FFI `WithPayload = Bool/Fields/Exclude`, `WithVector = Bool/Names`;

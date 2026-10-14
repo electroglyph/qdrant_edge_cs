@@ -1,5 +1,7 @@
 # Qdrant.Edge for C#
 
+Full guides: [`docs/README.md`](docs/README.md) (start with [`docs/getting-started.md`](docs/getting-started.md)).
+
 Embedded single-shard vector search for .NET: idiomatic C# over the Qdrant edge engine, which stays in Rust behind a small JSON C ABI. No server, no gRPC — a shard is a directory on disk plus a native library.
 
 - Package `Qdrant.Edge`, version `0.9.0`, targets `net10.0` (C# 14, nullable enabled).

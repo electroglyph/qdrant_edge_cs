@@ -148,8 +148,9 @@ public sealed class EdgeShard : IDisposable
     /// <param name="tmpDir">Temporary unpack directory; defaults to the snapshot parent.</param>
     /// <remarks>
     /// A full recovery replaces data entirely; a partial recovery merges in
-    /// place and is not atomic. If a full recovery fails after the data
-    /// directory was cleared, the shard is left unloaded.
+    /// place and is not atomic. A failed recovery keeps the previous engine
+    /// registered, so the shard stays usable; restore from a full snapshot
+    /// to return the on-disk directory to a known-good state.
     /// </remarks>
     public void UpdateFromSnapshot(string snapshotPath, string? tmpDir = null)
     {
