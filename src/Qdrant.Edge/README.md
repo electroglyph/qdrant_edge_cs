@@ -1,7 +1,7 @@
 # Qdrant.Edge (qdrant_edge_cs)
 
 Idiomatic C# interface for `qdrant_edge` (embedded single-shard vector search).
-Version `0.9.0`; native engine line `0.8.0`, synced with `ffi` / `python` / `amalgamate.py`.
+Version `0.9.0`; native bridge `qdrant-edge-cabi` `0.9.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
 
 ## Layout
 
@@ -65,7 +65,7 @@ operations throw `ShardClosedException`.
   Python merges them into one union.
 - FFI `WithPayload = Bool/Fields/Exclude`, `WithVector = Bool/Names`;
   Python uses `bool | string[]` shapes.
-- `search_matrix` is behind `QDRANT_EDGE_MATRIX` (mirrors FFI `matrix` feature).
+- `search_matrix` is experimental (`[Experimental("QDRANT_EDGE_MATRIX")]`, O(n²) cost).
 
 ## v2 gaps
 

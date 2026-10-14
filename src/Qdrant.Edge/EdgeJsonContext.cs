@@ -123,7 +123,6 @@ namespace Qdrant.Edge;
 [JsonSerializable(typeof(BinaryQuantizationQueryEncoding))]
 [JsonSerializable(typeof(TurboQuantBitSize))]
 [JsonSerializable(typeof(Modifier))]
-[JsonSerializable(typeof(SparseIndexType))]
 [JsonSerializable(typeof(Direction))]
 [JsonSerializable(typeof(Sample))]
 [JsonSerializable(typeof(RecommendStrategy))]

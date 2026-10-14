@@ -834,7 +834,6 @@ public sealed class RequestsGapsTests
         Assert.Null(anonymous.Using);
     }
 
-#if QDRANT_EDGE_MATRIX
 #pragma warning disable QDRANT_EDGE_MATRIX
     [Fact]
     public void SearchMatrix_RankedShard_ReturnsSamplesAndNearests()
@@ -856,7 +855,6 @@ public sealed class RequestsGapsTests
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 #pragma warning restore QDRANT_EDGE_MATRIX
-#endif
 
     // SearchMatrixResponse / ShardInfo
 

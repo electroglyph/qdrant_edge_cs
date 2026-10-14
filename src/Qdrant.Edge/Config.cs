@@ -82,19 +82,6 @@ public sealed record VectorDataConfig
     }
 }
 
-/// <summary>Sparse index type.</summary>
-public enum SparseIndexType
-{
-    /// <summary>Mutable RAM index.</summary>
-    MutableRam,
-
-    /// <summary>Immutable RAM index.</summary>
-    ImmutableRam,
-
-    /// <summary>Memory-mapped index.</summary>
-    Mmap,
-}
-
 /// <summary>Sparse vector modifier.</summary>
 public enum Modifier
 {

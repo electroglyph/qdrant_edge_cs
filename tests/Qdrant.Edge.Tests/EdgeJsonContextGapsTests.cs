@@ -1633,23 +1633,6 @@ public sealed class EdgeJsonContextGapsTests
         Assert.Equal(original, back);
     }
 
-    public static IEnumerable<object[]> SparseIndexTypeCases()
-    {
-        foreach (SparseIndexType value in Enum.GetValues<SparseIndexType>())
-        {
-            yield return [value];
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(SparseIndexTypeCases))]
-    public void SparseIndexType_DeepRoundTrip_PreservesValue(SparseIndexType original)
-    {
-        string json = JsonSerializer.Serialize(original, EdgeJsonContext.Deep.SparseIndexType);
-        SparseIndexType back = JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.SparseIndexType);
-        Assert.Equal(original, back);
-    }
-
     public static IEnumerable<object[]> DirectionCases()
     {
         foreach (Direction value in Enum.GetValues<Direction>())

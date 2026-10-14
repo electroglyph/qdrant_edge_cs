@@ -433,7 +433,6 @@ public sealed class EdgeShard : IDisposable
         return Task.Run(() => Search(request, cancellationToken), cancellationToken);
     }
 
-#if QDRANT_EDGE_MATRIX
     /// <summary>Runs a search-matrix computation (experimental; O(n^2) cost).</summary>
     /// <param name="request">Matrix request.</param>
     /// <param name="cancellationToken">Cancellation token (checked before dispatch).</param>
@@ -450,7 +449,6 @@ public sealed class EdgeShard : IDisposable
         return JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.SearchMatrixResponse)
             ?? throw new EdgeOperationException("engine returned an empty matrix response");
     }
-#endif
 
     private static EdgeShard CreateCore(string path, string configJson, bool configJsonRequired)
     {

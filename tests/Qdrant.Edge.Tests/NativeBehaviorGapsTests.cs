@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace Qdrant.Edge.Tests;
 
-/// <summary>test.md §16 (SearchMatrix, QDRANT_EDGE_MATRIX) + §19 (native behavior gaps).</summary>
+/// <summary>test.md §16 (SearchMatrix) + §19 (native behavior gaps).</summary>
 public sealed class NativeBehaviorGapsTests
 {
     private const ulong Cap = EdgeValidation.MaxResultCount;
@@ -79,9 +79,8 @@ public sealed class NativeBehaviorGapsTests
     private static ulong CountText(EdgeShard shard, string text) =>
         shard.Count(new CountRequest { Filter = TitleIs(text) });
 
-    // §16 SearchMatrix: validation arms (method exists only with the symbol).
+    // §16 SearchMatrix: validation arms.
 
-#if QDRANT_EDGE_MATRIX
 #pragma warning disable QDRANT_EDGE_MATRIX
     [Fact]
     public void SearchMatrix_NullRequest_Throws()
@@ -321,15 +320,6 @@ public sealed class NativeBehaviorGapsTests
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 #pragma warning restore QDRANT_EDGE_MATRIX
-#endif
-
-#if !QDRANT_EDGE_MATRIX
-    [Fact]
-    public void SearchMatrix_SymbolOff_SurfaceAbsent()
-    {
-        Assert.Null(typeof(EdgeShard).GetMethod("SearchMatrix"));
-    }
-#endif
 
     [Fact]
     public void SearchMatrixResponse_NumAndUuidIds_RoundTrips()
