@@ -149,13 +149,13 @@ public sealed class EdgeValidationGapsTests
     public void CheckGeoPoint_NaNLon_ThrowsWithLonFieldName()
     {
         EdgeInvalidArgumentException ex = Assert.Throws<EdgeInvalidArgumentException>(() => EdgeValidation.CheckGeoPoint(double.NaN, 0.0));
-        Assert.Contains("lon", ex.Message);
+        Assert.Contains("lon must be", ex.Message);
     }
 
     [Fact]
     public void CheckGeoPoint_NaNLat_ThrowsWithLatFieldName()
     {
         EdgeInvalidArgumentException ex = Assert.Throws<EdgeInvalidArgumentException>(() => EdgeValidation.CheckGeoPoint(0.0, double.NaN));
-        Assert.Contains("lat", ex.Message);
+        Assert.Contains("lat must be", ex.Message);
     }
 }

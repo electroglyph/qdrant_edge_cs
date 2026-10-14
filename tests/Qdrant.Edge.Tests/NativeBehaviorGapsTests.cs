@@ -161,7 +161,6 @@ public sealed class NativeBehaviorGapsTests
             Filter = EdgeShardReadsNativeTests.CategoryIs("a"),
         });
         Assert.Equal(2, response.SampleIds.Count);
-        Assert.All(response.SampleIds, id => Assert.Equal(id, PointId.FromNumber(((NumPointId)id).Value)));
         Assert.All(response.SampleIds, id =>
         {
             ulong value = ((NumPointId)id).Value;
@@ -281,6 +280,44 @@ public sealed class NativeBehaviorGapsTests
         });
         Assert.Equal(3, response.SampleIds.Count);
         Assert.Equal(3, response.Nearests.Count);
+        Assert.Equal(3ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void SearchMatrix_ZeroSampleSize_ReturnsEmpty()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        using EdgeShard shard = SeedThree(out _);
+        SearchMatrixResponse response = shard.SearchMatrix(new SearchMatrixRequest
+        {
+            SampleSize = 0,
+            LimitPerSample = 1,
+        });
+        Assert.Empty(response.SampleIds);
+        Assert.Empty(response.Nearests);
+        Assert.Equal(3ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void SearchMatrix_ZeroLimitPerSample_ReturnsEmptyNearests()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        using EdgeShard shard = SeedThree(out _);
+        SearchMatrixResponse response = shard.SearchMatrix(new SearchMatrixRequest
+        {
+            SampleSize = 2,
+            LimitPerSample = 0,
+        });
+        Assert.Empty(response.SampleIds);
+        Assert.Empty(response.Nearests);
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 #pragma warning restore QDRANT_EDGE_MATRIX
@@ -505,6 +542,26 @@ public sealed class NativeBehaviorGapsTests
             GroupSize = Cap + 1,
         };
         Assert.Throws<EdgeInvalidArgumentException>(() => shard.QueryGroups(request));
+        Assert.Equal(3ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void QueryGroups_GroupSizeAtCap_DoesNotAbort()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        using EdgeShard shard = EdgeShardReadsNativeTests.CategorizedShard(out _);
+        IReadOnlyList<Group> groups = shard.QueryGroups(new GroupRequest
+        {
+            Query = NearestQuery(1f, 0f, 0f, 0f, 10),
+            GroupBy = "category",
+            Groups = 2,
+            GroupSize = Cap,
+        });
+        Assert.Equal(2, groups.Count);
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 
@@ -953,6 +1010,28 @@ public sealed class NativeBehaviorGapsTests
         }));
     }
 
+    [Fact]
+    public void UuidIds_FromString_RoundTripsThroughReads()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        PointId parsed = PointId.FromString("11111111-2222-3333-4444-555555555555");
+        using EdgeShard shard = SeedThree(out _);
+        shard.Update(UpdateOperation.UpsertPoints(
+        [
+            new Point { Id = parsed, Vector = Vector.Single([1f, 0f, 0f, 0f]) },
+        ]));
+        IReadOnlyList<Record> records = shard.Retrieve(new RetrieveRequest
+        {
+            PointIds = [parsed],
+        });
+        Record single = Assert.Single(records);
+        Assert.Equal(parsed, single.Id);
+    }
+
     // §19 payload shapes + NaN rejection.
 
     [Fact]
@@ -1030,6 +1109,20 @@ public sealed class NativeBehaviorGapsTests
         using EdgeShard shard = SeedThree(out _);
         Assert.ThrowsAny<EdgeException>(() =>
             shard.Update(UpdateOperation.SetPayload([PointId.FromNumber(1)], """{"x": NaN}""")));
+        Assert.Equal(3ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void Payload_PosInf_RejectedWithoutAbort()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        using EdgeShard shard = SeedThree(out _);
+        Assert.ThrowsAny<EdgeException>(() =>
+            shard.Update(UpdateOperation.SetPayload([PointId.FromNumber(1)], """{"x": Infinity}""")));
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 
@@ -1371,6 +1464,25 @@ public sealed class NativeBehaviorGapsTests
     }
 
     [Fact]
+    public void HasId_Query_ReturnsMatchingPoints()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        using EdgeShard shard = SeedThree(out _);
+        QueryRequest request = NearestQuery(1f, 0f, 0f, 0f, 10) with
+        {
+            Filter = new Filter { Must = [Condition.HasId([PointId.FromNumber(1), PointId.FromNumber(3)])] },
+        };
+        IReadOnlyList<ScoredPoint> hits = shard.Query(request);
+        Assert.Equal(2, hits.Count);
+        Assert.Contains(PointId.FromNumber(1), hits.Select(hit => hit.Id));
+        Assert.Contains(PointId.FromNumber(3), hits.Select(hit => hit.Id));
+    }
+
+    [Fact]
     public void HasVector_FiltersPointsMissingNamedVector()
     {
         if (!NativeLoader.IsAvailable)
@@ -1668,7 +1780,7 @@ public sealed class NativeBehaviorGapsTests
     }
 
     [Fact]
-    public void Fusion_RrfKZero_ReturnsNullScores()
+    public void Fusion_RrfKZero_ThrowsJsonException()
     {
         if (!NativeLoader.IsAvailable)
         {
@@ -2239,13 +2351,14 @@ public sealed class NativeBehaviorGapsTests
         }
 
         using EdgeShard shard = SeedThree(out string dir);
-        shard.SetHnswConfig(new HnswIndexConfig { M = 32, EfConstruct = 100 });
+        shard.SetVectorHnswConfig(string.Empty, new HnswIndexConfig { M = 32, EfConstruct = 100 });
         shard.Flush();
         shard.Unload();
         using EdgeShard reloaded = EdgeShard.Load(dir);
         Assert.Equal(3ul, reloaded.Count(new CountRequest()));
         EdgeConfig echoed = reloaded.GetConfig();
         Assert.Equal(4ul, echoed.VectorData[string.Empty].Size);
+        Assert.Equal(32ul, echoed.VectorData[string.Empty].HnswConfig?.M);
         reloaded.SetHnswConfig(new HnswIndexConfig { M = 32, EfConstruct = 100 });
         Assert.Equal(3ul, reloaded.Count(new CountRequest()));
     }
@@ -2294,11 +2407,36 @@ public sealed class NativeBehaviorGapsTests
         }
 
         // Tiny single-segment shards report no optimization work even after
-        // writes and deletes; the dirty-true path needs larger fixtures.
+        // writes and deletes; the dirty-true path needs a larger fixture (see below).
         using EdgeShard shard = SeedThree(out _);
         shard.Update(UpdateOperation.DeletePoints([PointId.FromNumber(3)]));
         Assert.False(shard.Optimize());
         Assert.Equal(2ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void Optimize_AfterHeavyDeletes_ReturnsTrue()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        string dir = TestHelpers.TempDir();
+        using EdgeShard shard = EdgeShard.Create(dir, TestHelpers.FourDimDotConfig());
+        List<Point> points = [];
+        for (ulong id = 1; id <= 1000; id++)
+        {
+            points.Add(TestHelpers.FourDimPoint(id, (float)id, 0f, 0f, 1f));
+        }
+
+        shard.Update(UpdateOperation.UpsertPoints(points));
+        shard.Flush();
+        shard.Update(UpdateOperation.DeletePoints(
+            Enumerable.Range(1, 900).Select(i => PointId.FromNumber((ulong)i)).ToList()));
+        shard.Flush();
+        Assert.True(shard.Optimize());
+        Assert.Equal(100ul, shard.Count(new CountRequest()));
     }
 
     // §19 concurrency trio.

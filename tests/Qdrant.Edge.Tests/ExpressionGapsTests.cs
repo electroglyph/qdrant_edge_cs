@@ -80,6 +80,18 @@ public sealed class ExpressionGapsTests
     }
 
     [Fact]
+    public void Condition_InvalidNestedFilter_Propagates()
+    {
+        var bad = Condition.Field(new FieldCondition
+        {
+            Key = "k",
+            Match = Match.CreateText("a"),
+            Range = new RangeFloat { Gte = 1 },
+        });
+        Assert.Throws<EdgeInvalidArgumentException>(() => Expression.Condition(bad));
+    }
+
+    [Fact]
     public void Condition_SizeAndDepthAccounted()
     {
         Expression expression = Expression.Condition(Condition.IsEmpty("seen"));
@@ -187,6 +199,14 @@ public sealed class ExpressionGapsTests
     public void Mult_Empty_PassesWithSizeOne()
     {
         Expression empty = Expression.Mult([]);
+        Assert.Equal(1ul, empty.Size);
+        Assert.Equal(1u, empty.Depth);
+    }
+
+    [Fact]
+    public void Sum_Empty_PassesWithSizeOne()
+    {
+        Expression empty = Expression.Sum([]);
         Assert.Equal(1ul, empty.Size);
         Assert.Equal(1u, empty.Depth);
     }
@@ -439,6 +459,20 @@ public sealed class ExpressionGapsTests
                 Expression.Decay(kind, Expression.Variable("$score")));
             Assert.Equal(kind, decay.DecayKind);
             decay.Validate();
+        }
+    }
+
+    [Fact]
+    public void Decay_AllKinds_RoundTripThroughJson()
+    {
+        foreach (DecayKind kind in new[] { DecayKind.Lin, DecayKind.Gauss, DecayKind.Exp })
+        {
+            Expression decay = Expression.Decay(kind, Expression.Variable("$score"));
+            string json = JsonSerializer.Serialize(decay, EdgeJsonContext.Deep.Expression);
+            Expression? back = JsonSerializer.Deserialize(json, EdgeJsonContext.Deep.Expression);
+            DecayExpression restored = Assert.IsType<DecayExpression>(back);
+            Assert.Equal(kind, restored.DecayKind);
+            Assert.Equal(json, JsonSerializer.Serialize(back, EdgeJsonContext.Deep.Expression));
         }
     }
 

@@ -240,6 +240,13 @@ public sealed class RequestsGapsTests
     }
 
     [Fact]
+    public void QueryRequest_InvalidFilter_Propagates()
+    {
+        QueryRequest request = new() { Limit = 10, Filter = InvalidFilter() };
+        Assert.Throws<EdgeInvalidArgumentException>(request.Validate);
+    }
+
+    [Fact]
     public void QueryRequest_NullQuery_PassesValidate()
     {
         QueryRequest request = new() { Limit = 10, Query = null };
@@ -393,14 +400,12 @@ public sealed class RequestsGapsTests
         }
 
         using EdgeShard shard = CityShard(out _);
-        Exception thrown = Assert.ThrowsAny<EdgeException>(() => shard.Scroll(new ScrollRequest
+        EdgeInvalidArgumentException thrown = Assert.Throws<EdgeInvalidArgumentException>(() => shard.Scroll(new ScrollRequest
         {
             Limit = 10,
             OrderBy = new OrderBy { Key = string.Empty },
         }));
-        Assert.True(
-            thrown is EdgeInvalidArgumentException or EdgeOperationException,
-            $"unexpected {thrown.GetType().Name}");
+        Assert.NotEmpty(thrown.Reason);
         Assert.Equal(2ul, shard.Count(new CountRequest()));
     }
 
@@ -484,6 +489,13 @@ public sealed class RequestsGapsTests
     {
         FacetRequest request = new() { Key = "  " };
         Assert.Throws<ArgumentException>(request.Validate);
+    }
+
+    [Fact]
+    public void Facet_InvalidFilter_Propagates()
+    {
+        FacetRequest request = new() { Key = "city", Filter = InvalidFilter() };
+        Assert.Throws<EdgeInvalidArgumentException>(request.Validate);
     }
 
     [Fact]
@@ -825,7 +837,7 @@ public sealed class RequestsGapsTests
 #if QDRANT_EDGE_MATRIX
 #pragma warning disable QDRANT_EDGE_MATRIX
     [Fact]
-    public void SearchMatrix_SmallShard_ReturnsSamplesAndNearests()
+    public void SearchMatrix_RankedShard_ReturnsSamplesAndNearests()
     {
         if (!NativeLoader.IsAvailable)
         {

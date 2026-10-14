@@ -222,6 +222,16 @@ public sealed class VectorGapsTests
     }
 
     [Fact]
+    public void VectorNamed_EmptyMultiDenseViaNamed_Throws()
+    {
+        var map = new Dictionary<string, NamedVector>
+        {
+            ["a"] = NamedVector.MultiDense([]),
+        };
+        Assert.Throws<EdgeInvalidArgumentException>(() => Vector.Named(map));
+    }
+
+    [Fact]
     public void Vector_UnknownShape_ThrowsInvalidArgument()
     {
         Vector forged = new FakeVector();

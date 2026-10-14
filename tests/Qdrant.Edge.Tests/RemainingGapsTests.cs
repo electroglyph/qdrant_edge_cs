@@ -128,6 +128,44 @@ public sealed class RemainingGapsTests
     }
 
     [Fact]
+    public void Query_OrderByInvalidKey_NativeRejectedWithReason()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        string dir = TestHelpers.TempDir();
+        using EdgeShard shard = EdgeShard.Create(dir, TestHelpers.FourDimDotConfig());
+        shard.Update(UpdateOperation.UpsertPoints([TestHelpers.FourDimPoint(1, 1f, 2f, 3f, 4f)]));
+        EdgeInvalidArgumentException thrown = Assert.Throws<EdgeInvalidArgumentException>(() =>
+            shard.Query(new QueryRequest
+            {
+                Limit = 10,
+                Query = ScoringQuery.CreateOrderBy(new OrderBy { Key = "!!!" }),
+            }));
+        Assert.False(string.IsNullOrEmpty(thrown.Reason));
+        Assert.Equal(thrown.Reason, thrown.Message);
+        Assert.Equal(1ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
+    public void Scroll_EmptyOrderByKey_NativeRejectedWithoutAborting()
+    {
+        if (!NativeLoader.IsAvailable)
+        {
+            return;
+        }
+
+        string dir = TestHelpers.TempDir();
+        using EdgeShard shard = EdgeShard.Create(dir, TestHelpers.FourDimDotConfig());
+        shard.Update(UpdateOperation.UpsertPoints([TestHelpers.FourDimPoint(1, 1f, 2f, 3f, 4f)]));
+        Assert.Throws<EdgeInvalidArgumentException>(() =>
+            shard.Scroll(new ScrollRequest { Limit = 10, OrderBy = new OrderBy { Key = string.Empty } }));
+        Assert.Equal(1ul, shard.Count(new CountRequest()));
+    }
+
+    [Fact]
     public void ThrowForStatus_NativeShardClosed_MapsToShardClosedException()
     {
         Exception caught = InvokeThrowForStatus(QdrantEdgeStatus.ShardClosed, "probe");

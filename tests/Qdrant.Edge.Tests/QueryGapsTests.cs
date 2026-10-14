@@ -93,6 +93,13 @@ public sealed class QueryGapsTests
         Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
     }
 
+    [Fact]
+    public void QueryRecommend_InvalidElementInNegatives_Propagates()
+    {
+        Query query = Query.Recommend([Dense()], [InvalidDense()]);
+        Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
+    }
+
     public static IEnumerable<object?[]> AllStrategies()
     {
         yield return [RecommendStrategy.BestScore];
@@ -169,6 +176,14 @@ public sealed class QueryGapsTests
     }
 
     [Fact]
+    public void QueryDiscover_InvalidPairNegativeElement_Propagates()
+    {
+        var pair = new ContextPair { Positive = Dense(), Negative = InvalidDense() };
+        Query query = Query.Discover(Dense(), [pair]);
+        Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
+    }
+
+    [Fact]
     public void QueryDiscover_EmptyContext_Passes()
     {
         Query query = Query.Discover(Dense(), []);
@@ -209,6 +224,14 @@ public sealed class QueryGapsTests
     public void QueryContext_InvalidElement_Propagates()
     {
         var pair = new ContextPair { Positive = Dense(), Negative = InvalidDense() };
+        Query query = Query.CreateContext([pair]);
+        Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
+    }
+
+    [Fact]
+    public void QueryContext_InvalidPositiveElement_Propagates()
+    {
+        var pair = new ContextPair { Positive = InvalidDense(), Negative = Dense() };
         Query query = Query.CreateContext([pair]);
         Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
     }
@@ -317,6 +340,23 @@ public sealed class QueryGapsTests
         Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
     }
 
+    public static IEnumerable<object?[]> InfCoeffVariants()
+    {
+        yield return [new FeedbackCoefficients { A = float.NegativeInfinity, B = 2f, C = 3f }];
+        yield return [new FeedbackCoefficients { A = 1f, B = float.PositiveInfinity, C = 3f }];
+        yield return [new FeedbackCoefficients { A = 1f, B = float.NegativeInfinity, C = 3f }];
+        yield return [new FeedbackCoefficients { A = 1f, B = 2f, C = float.PositiveInfinity }];
+        yield return [new FeedbackCoefficients { A = 1f, B = 2f, C = float.NegativeInfinity }];
+    }
+
+    [Theory]
+    [MemberData(nameof(InfCoeffVariants))]
+    public void QueryFeedback_InfCoeffVariants_Throws(FeedbackCoefficients coeffs)
+    {
+        Query query = Query.CreateFeedback(Dense(), [], coeffs);
+        Assert.Throws<EdgeInvalidArgumentException>(query.Validate);
+    }
+
     [Fact]
     public void Query_UnknownShape_Throws()
     {
@@ -376,7 +416,8 @@ public sealed class QueryGapsTests
     public void OrderBy_NullKey_Throws()
     {
         ScoringQuery query = ScoringQuery.CreateOrderBy(new OrderBy { Key = null! });
-        Assert.Throws<ArgumentNullException>(query.Validate);
+        ArgumentNullException ex = Assert.Throws<ArgumentNullException>(query.Validate);
+        Assert.Equal("Key", ex.ParamName);
     }
 
     [Fact]

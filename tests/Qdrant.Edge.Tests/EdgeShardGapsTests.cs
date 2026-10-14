@@ -783,7 +783,7 @@ public sealed class EdgeShardGapsTests
     }
 
     [Fact]
-    public void ThrowForStatus_OverCapRequest_PreCheckFiresFirst()
+    public void ClientPreCheck_OverCapRequest_ThrowsBeforeNative()
     {
         // The forged limit skips no validation: shard.Search validates before dispatch,
         // so the client pre-check wins over any native OperationError — without native present.
@@ -833,7 +833,7 @@ public sealed class EdgeShardGapsTests
     }
 
     [Fact]
-    public void Optimize_ReturnsTrueAfterWrites()
+    public void Optimize_ReturnsTrueAfterHeavyDeletes()
     {
         if (!NativeLoader.IsAvailable)
         {
@@ -1032,11 +1032,13 @@ public sealed class EdgeShardGapsTests
         Assert.Throws<ArgumentException>(() => EdgeShard.UnpackSnapshot(snapshot, TestHelpers.TempDir()));
     }
 
-    [Fact]
-    public void UnpackSnapshot_WhitespaceTarget_ThrowsArgument()
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void UnpackSnapshot_WhitespaceTarget_ThrowsArgument(string target)
     {
         Assert.Throws<ArgumentException>(() =>
-            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), "  "));
+            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), target));
     }
 
     [Fact]

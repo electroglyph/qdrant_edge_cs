@@ -124,7 +124,8 @@ public sealed class FilterGapsTests
                 Radius = -1.0,
             },
         };
-        Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        EdgeInvalidArgumentException ex = Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        Assert.Contains("more than one", ex.Message);
     }
 
     [Fact]
@@ -136,7 +137,8 @@ public sealed class FilterGapsTests
             Match = Match.CreateText("x"),
             GeoPolygon = UnclosedPolygon(),
         };
-        Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        EdgeInvalidArgumentException ex = Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        Assert.Contains("more than one", ex.Message);
     }
 
     [Fact]
@@ -152,7 +154,8 @@ public sealed class FilterGapsTests
                 BottomRight = new GeoPoint { Lon = 10, Lat = 10 },
             },
         };
-        Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        EdgeInvalidArgumentException ex = Assert.Throws<EdgeInvalidArgumentException>(field.Validate);
+        Assert.Contains("more than one", ex.Message);
     }
 
     [Fact]
@@ -171,6 +174,7 @@ public sealed class FilterGapsTests
     {
         Condition forged = new FakeCondition();
         Assert.Equal(0u, forged.Depth());
+        Assert.Throws<EdgeInvalidArgumentException>(forged.Validate);
     }
 
     [Fact]
@@ -313,25 +317,41 @@ public sealed class FilterGapsTests
         Assert.Equal(field, fieldBack);
 
         Condition isEmpty = Condition.IsEmpty("k");
-        Assert.IsType<IsEmptyCondition>(RoundTripCondition(isEmpty));
+        Condition isEmptyBack = RoundTripCondition(isEmpty);
+        Assert.IsType<IsEmptyCondition>(isEmptyBack);
+        Assert.Equal(isEmpty, isEmptyBack);
 
         Condition isNull = Condition.IsNull("k");
-        Assert.IsType<IsNullCondition>(RoundTripCondition(isNull));
+        Condition isNullBack = RoundTripCondition(isNull);
+        Assert.IsType<IsNullCondition>(isNullBack);
+        Assert.Equal(isNull, isNullBack);
 
         Condition hasId = Condition.HasId([PointId.FromNumber(1)]);
-        Assert.IsType<HasIdCondition>(RoundTripCondition(hasId));
+        Condition hasIdBack = RoundTripCondition(hasId);
+        HasIdCondition hasIdClause = Assert.IsType<HasIdCondition>(hasIdBack);
+        Assert.Equal<PointId>(
+            ((HasIdCondition)hasId).Ids,
+            hasIdClause.Ids);
 
         Condition hasVector = Condition.HasVector("vec");
-        Assert.IsType<HasVectorCondition>(RoundTripCondition(hasVector));
+        Condition hasVectorBack = RoundTripCondition(hasVector);
+        Assert.IsType<HasVectorCondition>(hasVectorBack);
+        Assert.Equal(hasVector, hasVectorBack);
 
         Condition slice = Condition.Slice(2, 1);
-        Assert.IsType<SliceCondition>(RoundTripCondition(slice));
+        Condition sliceBack = RoundTripCondition(slice);
+        Assert.IsType<SliceCondition>(sliceBack);
+        Assert.Equal(slice, sliceBack);
 
         Condition nested = Condition.Nested("k", new Filter());
-        Assert.IsType<NestedCondition>(RoundTripCondition(nested));
+        Condition nestedBack = RoundTripCondition(nested);
+        Assert.IsType<NestedCondition>(nestedBack);
+        Assert.Equal(nested, nestedBack);
 
         Condition filter = Condition.NestedFilter(new Filter());
-        Assert.IsType<FilterCondition>(RoundTripCondition(filter));
+        Condition filterBack = RoundTripCondition(filter);
+        Assert.IsType<FilterCondition>(filterBack);
+        Assert.Equal(filter, filterBack);
     }
 
     [Fact]

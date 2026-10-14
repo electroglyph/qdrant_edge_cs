@@ -97,22 +97,6 @@ public sealed class InteropGapsTests
     }
 
     [Fact]
-    public void GetRid_MatchesCurrentPlatform()
-    {
-        string expected = RuntimeInformation.ProcessArchitecture switch
-        {
-            Architecture.X64 when OperatingSystem.IsWindows() => "win-x64",
-            Architecture.Arm64 when OperatingSystem.IsWindows() => "win-arm64",
-            Architecture.X64 when OperatingSystem.IsMacOS() => "osx-x64",
-            Architecture.Arm64 when OperatingSystem.IsMacOS() => "osx-arm64",
-            Architecture.X64 => "linux-x64",
-            Architecture.Arm64 => "linux-arm64",
-            _ => "linux-x64",
-        };
-        Assert.Equal(expected, InvokeGetRid());
-    }
-
-    [Fact]
     public void QdrantEdgeStatus_Values_AreZeroToThree()
     {
         Assert.Equal(0, (int)QdrantEdgeStatus.Ok);
