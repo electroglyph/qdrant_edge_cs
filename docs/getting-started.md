@@ -126,16 +126,17 @@ EdgeConfig textConfig = new()
 {
     VectorData = new Dictionary<string, VectorDataConfig>
     {
-        [""] = new VectorDataConfig { Size = 768, Distance = Distance.Cosine },
+        // "text" holds the document embeddings; the query below addresses it with usingVector: "text".
+        ["text"] = new VectorDataConfig { Size = 768, Distance = Distance.Cosine },
     },
 };
 using EdgeShard textShard = EdgeShard.Create(dir, textConfig);
-// Upsert one Point per document with Vector.Single(Embed(prefixedText))
+// Upsert one Point per document with a "text" NamedVector holding Embed(prefixedText)
 // and a JsonObject payload holding text + category.
 IReadOnlyList<ScoredPoint> textHits = textShard.Query(new QueryRequest
 {
     Limit = 2,
-    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryEmbedding))),
+    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryEmbedding), usingVector: "text")),
     WithPayload = WithPayload.CreateFields(["text", "category"]),
 });
 ```

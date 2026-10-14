@@ -61,4 +61,6 @@ Most types have exactly one primary page; a few cross-cutting types list two
 Conventions for every page: Markdown only, `csharp`/`sh`/`text` fences, no
 emojis, plain-word naming, `is null` checks, `Path.GetTempPath()` for temp
 dirs, one behavior per example, observable behavior (counts/order/page unions)
-rather than hand-computed scores.
+rather than hand-computed scores. Single-vector examples use the default
+unnamed field (`""`); named fields need `Using` on every query — see
+[`vectors-config.md`](vectors-config.md).

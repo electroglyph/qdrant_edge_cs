@@ -147,7 +147,8 @@ EdgeConfig config = new()
 {
     VectorData = new Dictionary<string, VectorDataConfig>
     {
-        [""] = new VectorDataConfig { Size = 768, Distance = Distance.Cosine },
+        // "text" holds the document embeddings; queries address it with usingVector: "text".
+        ["text"] = new VectorDataConfig { Size = 768, Distance = Distance.Cosine },
     },
 };
 using EdgeShard shard = EdgeShard.Create(dir, config);
@@ -159,7 +160,10 @@ for (int i = 0; i < docs.Length; i++)
         new Point
         {
             Id = PointId.FromNumber((ulong)(i + 1)),
-            Vector = Vector.Single(Embed(docs[i].Text)),
+            Vector = Vector.Named(new Dictionary<string, NamedVector>
+            {
+                ["text"] = NamedVector.Dense(Embed(docs[i].Text)),
+            }),
             Payload = new System.Text.Json.Nodes.JsonObject
             {
                 ["text"] = docs[i].Text,
@@ -174,7 +178,7 @@ float[] queryVec = Embed("Query: What is quantization?");
 IReadOnlyList<ScoredPoint> hits = shard.Query(new QueryRequest
 {
     Limit = 2,
-    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryVec))),
+    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryVec), usingVector: "text")),
     WithPayload = WithPayload.CreateFields(["text", "category"]),
 });
 
@@ -182,7 +186,7 @@ IReadOnlyList<ScoredPoint> hits = shard.Query(new QueryRequest
 IReadOnlyList<ScoredPoint> filtered = shard.Query(new QueryRequest
 {
     Limit = 2,
-    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryVec))),
+    Query = ScoringQuery.CreateVector(Query.Nearest(NamedVector.Dense(queryVec), usingVector: "text")),
     Filter = new Filter
     {
         Must =
