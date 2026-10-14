@@ -1,10 +1,10 @@
 # Writes
 
 Purpose: every `UpdateOperation` factory, upsert modes, point/vector/id
-shapes, and payload merge-vs-overwrite semantics. For reads see `reads.md`;
-for index/field config bounds see `vectors-config.md`.
+shapes, and payload merge-vs-overwrite semantics. For reads see [`reads.md`](reads.md);
+for index/field config bounds see [`vectors-config.md`](vectors-config.md).
 
-Prerequisites: staged native library (`getting-started.md`). Examples share a
+Prerequisites: staged native library ([`getting-started.md`](getting-started.md)). Examples share a
 4-dim `Distance.Dot` shard at a temp dir; each snippet shows its own updates
 against that shape unless stated.
 
@@ -17,7 +17,7 @@ against that shape unless stated.
   `JsonObject` payload. `PointVectors` takes `required Id` plus a replacement
   `Vector`. Write payload is always a `JsonObject`; read payload
   (`ScoredPoint.Payload`, `Record.Payload`) comes back as a JSON string that
-  must be parsed (see `reads.md`).
+  must be parsed (see [`reads.md`](reads.md)).
 - `payloadJson` on the set/overwrite factories must be a JSON-object string
   (for example `"""{"color":"red"}"""`); the client checks null/whitespace,
   the engine checks object shape.
@@ -183,7 +183,7 @@ Keep the split: `CreateFieldIndexOperation` takes a `PayloadSchemaType`;
 (`PayloadIndexParams.Keyword`, `.Integer`, `.Float`, `.Geo`, `.Text`,
 `.Bool`, `.Datetime`, `.Uuid`). Python merges both into one union; C# keeps
 the FFI split. `IntegerIndexParams` with `Lookup: false, Range: false` is
-rejected. Facet and filtered reads need the index first (see `reads.md`).
+rejected. Facet and filtered reads need the index first (see [`reads.md`](reads.md)).
 
 ## Vector fields: create dense, create sparse, delete name
 
@@ -208,7 +208,11 @@ factories (null names still throw `ArgumentNullException`).
   succeeds but filtered query/facet falls back or fails; create the keyword
   index first.
 - Setting both `Range` and `DatetimeRange` on one `FieldCondition`: they
-  share one predicate slot and are mutually exclusive (see `filters.md`).
+  share one predicate slot and are mutually exclusive (see [`filters.md`](filters.md)).
 
-Cross-links: `reads.md`, `filters.md`, `vectors-config.md`,
-`errors-limits.md`.
+Cross-links: [`reads.md`](reads.md), [`filters.md`](filters.md), [`vectors-config.md`](vectors-config.md),
+[`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

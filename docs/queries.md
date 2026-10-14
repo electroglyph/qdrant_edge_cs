@@ -1,8 +1,8 @@
 # Queries
 
 Purpose: `Query` variants, `ScoringQuery` modes, prefetch chains, and the
-3-field `SearchParams`. Filter syntax lives in `filters.md`; formula operand
-details that touch geo/datetime live in `geo-datetime.md`.
+3-field `SearchParams`. Filter syntax lives in [`filters.md`](filters.md); formula operand
+details that touch geo/datetime live in [`geo-datetime.md`](geo-datetime.md).
 
 Prerequisites: 4-dim `Distance.Dot` shard. `queryVec`, `vecA`, and `vecB`
 below are 4-dim float arrays.
@@ -221,11 +221,15 @@ fields; `HnswEf` has no client-side range check.
   `ScoringQuery` variant (`MmrScoringQuery` record).
 - Using Python names (`RecommendBestScore`, `lambda_`, standalone `Mmr`):
   C# uses `Recommend` + `RecommendStrategy`, `Lambda`, and the variant
-  factory (see `errors-limits.md`).
+  factory (see [`errors-limits.md`](errors-limits.md)).
 - Putting quantization/acorn/idf knobs on `SearchParams`: they are
   Python-only; C# accepts only `HnswEf`/`Exact`/`IndexedOnly`.
 - Building a formula larger than 10,000 nodes: compose fails fast with
   `EdgeInvalidArgumentException` before any native call.
 
-Cross-links: `reads.md`, `filters.md`, `geo-datetime.md`,
-`errors-limits.md`.
+Cross-links: [`reads.md`](reads.md), [`filters.md`](filters.md), [`geo-datetime.md`](geo-datetime.md),
+[`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

@@ -3,7 +3,7 @@
 Purpose: install the package, build and stage the native engine, and run a
 first create-upsert-query-flush-reopen round-trip. For the full lifecycle
 surface (`Load` variants, `Unload` vs `Dispose`, config setters) see
-`lifecycle.md`.
+[`lifecycle.md`](lifecycle.md).
 
 Prerequisites: .NET 10 SDK, Rust toolchain (native build only),
 `git clone --recurse-submodules` (the engine pin in
@@ -111,11 +111,11 @@ Console.WriteLine($"Points after reopen: {reopened.Count(new CountRequest { Exac
 Expected output note: the query returns 1 hit (the single upserted point);
 the count after reopen is 1. Scores are engine-computed; pin counts and ids,
 not score literals. `Dispose` flushes then releases (idempotent); see
-`lifecycle.md` for `Unload` vs `Dispose`.
+[`lifecycle.md`](lifecycle.md) for `Unload` vs `Dispose`.
 
 ## 4. Semantic search with an ONNX embedding model (condensed)
 
-The top-level `README.md` carries the full ONNX end-to-end sample
+The top-level [`README.md`](README.md) carries the full ONNX end-to-end sample
 (`Microsoft.ML.OnnxRuntime` 1.31.0 + `Tokenizers.HuggingFace` 3.23.1 against
 `jina-embeddings-v5-text-nano-retrieval-onnx/model_int8.onnx`, 768-dim
 cosine). The condensed shape is:
@@ -153,4 +153,8 @@ Keep one shared `InferenceSession`/`Tokenizer`/`EdgeShard`; dispose each;
 - Hardcoding `/tmp` or `C:\` paths: use `Path.GetTempPath()` and
   `Path.Combine` so samples run cross-platform.
 
-Cross-links: `lifecycle.md`, `vectors-config.md`, `errors-limits.md`.
+Cross-links: [`lifecycle.md`](lifecycle.md), [`vectors-config.md`](vectors-config.md), [`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

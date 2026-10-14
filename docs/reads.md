@@ -5,7 +5,7 @@ batch, groups, scroll, retrieve, count, facet, info — plus payload/vector
 projection and score/limit handling.
 
 Prerequisites: staged native library and a 4-dim `Distance.Dot` shard with a
-few points (see `getting-started.md`). Facet needs an indexed key.
+few points (see [`getting-started.md`](getting-started.md)). Facet needs an indexed key.
 
 ## Concepts
 
@@ -29,7 +29,7 @@ few points (see `getting-started.md`). Facet needs an indexed key.
 - `FacetResponse` is a plain object with `Hits`, a `Count` property, and an
   indexer (`facets[0]`).
 - `ScoreThreshold` is an optional finite cutoff; result limits are capped at
-  1,048,576 (`errors-limits.md`).
+  1,048,576 ([`errors-limits.md`](errors-limits.md)).
 
 ## Filtered ANN with projection and threshold
 
@@ -272,4 +272,8 @@ foreach (ScoredPoint hit in withPayload)
 - Parsing `ScoredPoint.Payload` as an object without a null check: it is
   null unless requested via `WithPayload`.
 
-Cross-links: `writes.md`, `queries.md`, `filters.md`, `vectors-config.md`.
+Cross-links: [`writes.md`](writes.md), [`queries.md`](queries.md), [`filters.md`](filters.md), [`vectors-config.md`](vectors-config.md).
+
+---
+
+Back to [documentation index](README.md).

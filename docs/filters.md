@@ -26,7 +26,7 @@ carry `color`, `price`, and `city` fields.
   `Bool`; `AnyVariants` offers `Strings`/`Integers` (homogeneous lists; empty
   `Any` is valid).
 - `RangeFloat` and `ValuesCount` bounds are all optional. `RangeDatetime`
-  bounds are RFC3339 strings (see `geo-datetime.md`).
+  bounds are RFC3339 strings (see [`geo-datetime.md`](geo-datetime.md)).
 - `Slice(total, index)` requires `total > 0` and `index < total`.
 - Nesting depth is capped at 64; leaves have depth 0, each
   `Nested`/`Filter` wrapper adds 1.
@@ -186,5 +186,9 @@ No cross-bound check (`Gte > Lt` passes client-side); the engine decides.
 - Calling `Condition.Slice(0, 0)`: `total` must be > 0 and `index` < total.
 - Expecting `HasId` with an empty list to throw: it passes validation.
 
-Cross-links: `reads.md`, `queries.md`, `geo-datetime.md`,
-`errors-limits.md`.
+Cross-links: [`reads.md`](reads.md), [`queries.md`](queries.md), [`geo-datetime.md`](geo-datetime.md),
+[`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

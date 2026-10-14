@@ -323,4 +323,8 @@ changing the vector size fails.
 - Changing vector size on reload and expecting a migration: the engine
   rejects it; create a new directory instead.
 
-Cross-links: `writes.md`, `lifecycle.md`, `snapshots-tuning.md`.
+Cross-links: [`writes.md`](writes.md), [`lifecycle.md`](lifecycle.md), [`snapshots-tuning.md`](snapshots-tuning.md).
+
+---
+
+Back to [documentation index](README.md).

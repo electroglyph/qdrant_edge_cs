@@ -2,10 +2,10 @@
 
 Purpose: shard creation/loading, config readback and tuning entry points,
 flush discipline, `Unload` vs `Dispose`, `Path`/`IsLoaded`, threading, and the
-two async overloads. Write/read/query shapes live in `writes.md`, `reads.md`,
-and `queries.md`.
+two async overloads. Write/read/query shapes live in [`writes.md`](writes.md), [`reads.md`](reads.md),
+and [`queries.md`](queries.md).
 
-Prerequisites: staged native library (see `getting-started.md`). Examples use
+Prerequisites: staged native library (see [`getting-started.md`](getting-started.md)). Examples use
 a temp dir plus a 4-dim `Distance.Dot` fixture unless stated.
 
 ## Concepts
@@ -218,5 +218,9 @@ no other outcome is possible.
 - Passing `Load(missingPath)` without `config` and expecting creation: only
   `Create` and `Load(path, config)` create; plain `Load` opens.
 
-Cross-links: `getting-started.md`, `writes.md`, `snapshots-tuning.md`,
-`errors-limits.md`.
+Cross-links: [`getting-started.md`](getting-started.md), [`writes.md`](writes.md), [`snapshots-tuning.md`](snapshots-tuning.md),
+[`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

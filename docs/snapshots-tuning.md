@@ -173,4 +173,8 @@ returns empty nearest lists. Cost grows quadratically; keep samples small.
 - Using `SearchMatrix` without the experimental opt-in: the call site must
   disable `QDRANT_EDGE_MATRIX` or document the O(n^2) opt-in.
 
-Cross-links: `lifecycle.md`, `reads.md`, `errors-limits.md`.
+Cross-links: [`lifecycle.md`](lifecycle.md), [`reads.md`](reads.md), [`errors-limits.md`](errors-limits.md).
+
+---
+
+Back to [documentation index](README.md).

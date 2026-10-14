@@ -218,19 +218,19 @@ surface as `EdgeInvalidArgumentException` (never raw `JsonException`).
 
 - Field index: C# keeps the FFI split (`CreateFieldIndex` schema form vs
   `CreateFieldIndexWithParams` params form); Python merges both into one
-  `create_field_index(field_name, schema | params)` union (`writes.md`).
+  `create_field_index(field_name, schema | params)` union ([`writes.md`](writes.md)).
 - `WithPayload` is `Bool`/`Fields`/`Exclude` (`BoolWithPayload`,
   `FieldsWithPayload`, `ExcludeWithPayload`); Python uses
   `bool | string[] | PayloadSelector`. `WithVector` is `Bool`/`Names`;
-  Python uses `bool | string[]` (`reads.md`).
+  Python uses `bool | string[]` ([`reads.md`](reads.md)).
 - `SearchParams` is exactly `{ HnswEf, Exact, IndexedOnly }`; Python adds
-  `quantization`/`acorn`/`idf` (`queries.md`).
+  `quantization`/`acorn`/`idf` ([`queries.md`](queries.md)).
 - `SnapshotManifest()` returns a JSON string; Python returns a dict
-  (`snapshots-tuning.md`).
+  ([`snapshots-tuning.md`](snapshots-tuning.md)).
 - C# uses `RetrieveRequest` / `ScrollResponse` records; Python uses
   `retrieve(point_ids, ...)` args and a `(records, next_offset)` tuple.
-- Python has no `query_groups` / `search_matrix`; C# has both (`reads.md`,
-  `snapshots-tuning.md`).
+- Python has no `query_groups` / `search_matrix`; C# has both ([`reads.md`](reads.md),
+  [`snapshots-tuning.md`](snapshots-tuning.md)).
 - `SearchMatrix` is `[Experimental("QDRANT_EDGE_MATRIX")]` with O(n^2) cost —
   usable, but opt in knowingly.
 - `RangeDatetime` (not `RangeDateTime`); `OrderValue` covers datetime sort
@@ -256,4 +256,8 @@ no FFI binding. v1 ships sparse search via `sparse_vector_data` +
 - Treating `SearchMatrix` as stable: keep the experimental opt-in and small
   samples.
 
-Cross-links: all sibling pages; primary divergences live here.
+Related: [`getting-started.md`](getting-started.md), [`lifecycle.md`](lifecycle.md), [`writes.md`](writes.md), [`reads.md`](reads.md), [`queries.md`](queries.md), [`filters.md`](filters.md), [`geo-datetime.md`](geo-datetime.md), [`vectors-config.md`](vectors-config.md), [`snapshots-tuning.md`](snapshots-tuning.md). This page is the canonical caps-and-exceptions reference: the other guides link here for limits, the exception hierarchy, and FFI-vs-Python differences instead of repeating them.
+
+---
+
+Back to [documentation index](README.md).

@@ -1,8 +1,8 @@
 # Geo and datetime
 
 Purpose: geo predicates, geo/datetime expressions, datetime ranges, and
-datetime ordering. General filter structure lives in `filters.md`; formula
-wrapping lives in `queries.md`.
+datetime ordering. General filter structure lives in [`filters.md`](filters.md); formula
+wrapping lives in [`queries.md`](queries.md).
 
 Prerequisites: 4-dim `Distance.Dot` shard. Geo points assume a `location`
 payload field holding `{ "lon": ..., "lat": ... }`; datetime examples assume
@@ -27,7 +27,7 @@ a `created` field holding RFC3339 strings.
 - `RangeDatetime` bounds (`Gte`/`Gt`/`Lte`/`Lt`) are RFC3339 strings with no
   client-side ordering check.
 - `DatetimeStartFrom(string)` positions an `OrderBy` at a timestamp; ordered
-  hits expose `OrderValue` (`reads.md`).
+  hits expose `OrderValue` ([`reads.md`](reads.md)).
 
 ## Each geo predicate, closed-ring rule, and interior holes
 
@@ -197,4 +197,8 @@ Console.WriteLine($"Datetime-ordered page: {page.Records.Count}, start={startRec
 - Expecting `Datetime("not-a-date")` to throw at the factory: it is
   infallible by design; the failure surfaces at query execution.
 
-Cross-links: `filters.md`, `queries.md`, `reads.md`.
+Cross-links: [`filters.md`](filters.md), [`queries.md`](queries.md), [`reads.md`](reads.md).
+
+---
+
+Back to [documentation index](README.md).
