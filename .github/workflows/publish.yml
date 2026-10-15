@@ -1,0 +1,40 @@
+name: publish
+
+# Version-triggered release via NuGet trusted publishing: a VersionPrefix
+# bump merged to master is the whole ceremony (and the release approval
+# review). Bump-less pushes run green and push nothing new
+# (--skip-duplicate). No tags, no CI prereleases, no .snupkg.
+#
+# One-time nuget.org setup (outside this repo): an account-level trusted
+# publisher policy scoped to Qdrant.Edge* (new-package scope to claim the
+# Qdrant.Edge ID first, new-version scope after), bound to this account
+# + repo + workflow. The username below is public (it is on every package
+# page); untrusted forks cannot mint tokens because the OIDC subject will
+# not match the bound policy.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Release test gate
+        run: dotnet test Qdrant.Edge.sln -c Release
+      - name: Pack the library
+        run: dotnet pack src/Qdrant.Edge/Qdrant.Edge.csproj -c Release --no-build -o ./nupkg
+      - name: NuGet login (temporary API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: electroglyph
+      - name: Push to nuget.org
+        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --skip-duplicate
