@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+
+- Ship prebuilt native engines for all six RIDs as NuGet `runtimes/` assets, built in CI (`build-native` matrix) — consumers no longer need a Rust toolchain.
+- Publish to nuget.org via trusted publishing (`VersionPrefix` bump to release); shared build settings in `Directory.Build.props`.
+- ONNX semantic-search examples run on a proper `"text"` named vector field end to end.
+- Docs: every cross-page reference is a link, each guide links back to the index, snapshot-recovery semantics corrected to match the C ABI.
+
 ## 0.9.0
 
 Validation and lifecycle fixes across the managed binding and the native

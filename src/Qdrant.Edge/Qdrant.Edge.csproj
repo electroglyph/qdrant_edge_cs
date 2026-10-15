@@ -11,7 +11,7 @@
     <AssemblyName>Qdrant.Edge</AssemblyName>
     <RootNamespace>Qdrant.Edge</RootNamespace>
     <PackageId>Qdrant.Edge</PackageId>
-    <VersionPrefix>0.9.0</VersionPrefix>
+    <VersionPrefix>0.10.0</VersionPrefix>
     <Authors>electroglyph</Authors>
     <Copyright>Copyright (c) 2026, electroglyph</Copyright>
     <Description>Idiomatic C# interface for qdrant_edge (embedded single-shard vector search). Native engine via stable C ABI; managed DTOs with source-generated JSON.</Description>
@@ -26,6 +26,10 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- Prebuilt native engines staged by CI under runtimes/<rid>/native/
+         (see .github/workflows/publish.yml). Absent for source builds;
+         NativeLoader probes exactly this layout in consuming apps. -->
+    <None Include="..\..\runtimes\**" Pack="true" PackagePath="runtimes\" />
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Qdrant.Edge.Tests</_Parameter1>
     </AssemblyAttribute>

@@ -1,7 +1,7 @@
 # Qdrant.Edge (qdrant_edge_cs)
 
 Idiomatic C# interface for `qdrant_edge` (embedded single-shard vector search).
-Version `0.9.0`; native bridge `qdrant-edge-cabi` `0.9.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
+Version `0.10.0`; native bridge `qdrant-edge-cabi` `0.10.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
 
 ## Layout
 
@@ -15,7 +15,9 @@ Version `0.9.0`; native bridge `qdrant-edge-cabi` `0.9.0` (upstream `ffi` / `pyt
 The engine stays in Rust. `native/cabi/` (`qdrant-edge-cabi`, `cdylib` named
 `qdrant_edge`) exposes the JSON-in/JSON-out C ABI over the engine sources in
 the pinned `third_party/qdrant` submodule (qdrant @ `016542aa` — the ABI
-depends on its engine types, so the pin is load-bearing). Clone with
+depends on its engine types, so the pin is load-bearing). Release NuGet
+packages already contain prebuilt engines for all six RIDs — build from
+source only when working on the bridge itself. Clone with
 `git clone --recurse-submodules https://github.com/electroglyph/qdrant_edge_cs.git`,
 then:
 

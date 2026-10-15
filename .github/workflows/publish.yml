@@ -6,11 +6,17 @@ name: publish
 # (--skip-duplicate). No tags, no CI prereleases, no .snupkg.
 #
 # One-time nuget.org setup (outside this repo): an account-level trusted
-# publisher policy scoped to Qdrant.Edge* (new-package scope to claim the
+# publisher policy scoped to Qdrant.Edge (new-package scope to claim the
 # Qdrant.Edge ID first, new-version scope after), bound to this account
 # + repo + workflow. The username below is public (it is on every package
 # page); untrusted forks cannot mint tokens because the OIDC subject will
 # not match the bound policy.
+#
+# The package ships prebuilt native engines: build-native compiles the
+# qdrant-edge-cabi cdylib once per RID (native runners everywhere except
+# win-arm64, which cross-compiles with the VS ARM64 tools) and the publish
+# job embeds them as NuGet runtimes/ assets, so consumers need no Rust
+# toolchain. NativeLoader probes exactly that layout.
 on:
   push:
     branches: [master]
@@ -20,7 +26,67 @@ permissions:
   contents: read
 
 jobs:
+  build-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            rid: linux-x64
+            lib: libqdrant_edge.so
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            rid: linux-arm64
+            lib: libqdrant_edge.so
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            rid: osx-arm64
+            lib: libqdrant_edge.dylib
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            rid: osx-x64
+            lib: libqdrant_edge.dylib
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            rid: win-x64
+            lib: qdrant_edge.dll
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            rid: win-arm64
+            lib: qdrant_edge.dll
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native/cabi
+          key: ${{ matrix.target }}
+      - name: ARM64 cross tools (Windows)
+        if: matrix.rid == 'win-arm64'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64_arm64
+      - name: Build cdylib
+        run: cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml --target ${{ matrix.target }}
+      - name: Stage RID asset
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.rid }}/native
+          cp "native/cabi/target/${{ matrix.target }}/release/${{ matrix.lib }}" "dist/${{ matrix.rid }}/native/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: dist/${{ matrix.rid }}/native/${{ matrix.lib }}
+          if-no-files-found: error
+
   publish:
+    needs: build-native
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -29,6 +95,20 @@ jobs:
           dotnet-version: 10.0.x
       - name: Release test gate
         run: dotnet test Qdrant.Edge.sln -c Release
+      - name: Download native RID assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: /tmp/native-assets
+      - name: Stage runtimes for pack
+        run: |
+          for d in /tmp/native-assets/native-*/; do
+            rid="${d%/}"
+            rid="${rid##*native-}"
+            mkdir -p "runtimes/$rid/native"
+            cp "$d"* "runtimes/$rid/native/"
+          done
+          find runtimes -type f | sort
       - name: Pack the library
         run: dotnet pack src/Qdrant.Edge/Qdrant.Edge.csproj -c Release --no-build -o ./nupkg
       - name: NuGet login (temporary API key)

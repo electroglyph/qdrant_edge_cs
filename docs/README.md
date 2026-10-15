@@ -1,4 +1,4 @@
-# Qdrant.Edge documentation (v0.9.0, `net10.0`)
+# Qdrant.Edge documentation (v0.10.0, `net10.0`)
 
 Purpose: task-oriented guides for the `Qdrant.Edge` managed binding with
 copy-pasteable C# examples. The XML doc comments on the public API remain the
@@ -22,7 +22,7 @@ assume `using Qdrant.Edge;`, a temp directory from `Path.GetTempPath()`, and a
 9. [`snapshots-tuning.md`](snapshots-tuning.md) — snapshots, `Optimize`, tuning, `SearchMatrix`.
 10. [`errors-limits.md`](errors-limits.md) — exceptions, caps, FFI-vs-Python divergences, v2 gaps.
 
-Version note: managed package and C ABI are both `0.9.0`
+Version note: managed package and C ABI are both `0.10.0`
 (`NativeLoader.ExpectedVersion`, `src/Qdrant.Edge/Qdrant.Edge.csproj`). The
 upstream `ffi`/`python` crates are `0.8.0` at the pinned `third_party/qdrant`
 submodule commit; resync when `lib/edge/VERSION` lands.

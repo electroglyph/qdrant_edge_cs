@@ -23,6 +23,9 @@ using Qdrant.Edge;
 
 ## 2. Build the native library and stage per-RID assets
 
+NuGet consumers skip this section: release packages ship all six prebuilt
+engines as `runtimes/` assets. What follows is for source builds.
+
 ```sh
 cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml
 ```
@@ -57,8 +60,8 @@ if (!NativeLoader.IsAvailable)
 }
 ```
 
-`NativeLoader.ExpectedVersion` is `"0.9.0"` and matches
-`src/Qdrant.Edge/Qdrant.Edge.csproj` (`Version 0.9.0`) and
+`NativeLoader.ExpectedVersion` is `"0.10.0"` and matches
+`src/Qdrant.Edge/Qdrant.Edge.csproj` (`VersionPrefix 0.10.0`) and
 `native/cabi/Cargo.toml`. Without a staged library, `EdgeShard.Create` and
 `EdgeShard.Load` throw `EdgeOperationException`.
 
