@@ -6,8 +6,8 @@ name: publish
 # (--skip-duplicate). No tags, no CI prereleases, no .snupkg.
 #
 # One-time nuget.org setup (outside this repo): an account-level trusted
-# publisher policy scoped to Qdrant.Edge (new-package scope to claim the
-# Qdrant.Edge ID first, new-version scope after), bound to this account
+# publisher policy scoped to qdrant_edge_cs (new-package scope to claim the
+# qdrant_edge_cs ID first, new-version scope after), bound to this account
 # + repo + workflow. The username below is public (it is on every package
 # page); untrusted forks cannot mint tokens because the OIDC subject will
 # not match the bound policy.
@@ -69,9 +69,13 @@ jobs:
           key: ${{ matrix.target }}
       - name: ARM64 cross tools (Windows)
         if: matrix.rid == 'win-arm64'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: amd64_arm64
+        shell: pwsh
+        # No third-party action: ilammy/msvc-dev-cmd is stuck on Node 20.
+        # Puts the VS ARM64 cross linker first so aarch64-msvc finds it.
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath
+          $msvc = (Get-ChildItem "$vs\VC\Tools\MSVC" | Sort-Object Name -Descending | Select-Object -First 1).FullName
+          Add-Content $env:GITHUB_PATH "$msvc\bin\HostX64\ARM64"
       - name: Build cdylib
         run: cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml --target ${{ matrix.target }}
       - name: Stage RID asset
@@ -79,7 +83,7 @@ jobs:
         run: |
           mkdir -p dist/${{ matrix.rid }}/native
           cp "native/cabi/target/${{ matrix.target }}/release/${{ matrix.lib }}" "dist/${{ matrix.rid }}/native/"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: native-${{ matrix.rid }}
           path: dist/${{ matrix.rid }}/native/${{ matrix.lib }}
@@ -96,7 +100,7 @@ jobs:
       - name: Release test gate
         run: dotnet test Qdrant.Edge.sln -c Release
       - name: Download native RID assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: native-*
           path: /tmp/native-assets

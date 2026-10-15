@@ -10,7 +10,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>Qdrant.Edge</AssemblyName>
     <RootNamespace>Qdrant.Edge</RootNamespace>
-    <PackageId>Qdrant.Edge</PackageId>
+    <PackageId>qdrant_edge_cs</PackageId>
     <VersionPrefix>0.10.0</VersionPrefix>
     <Authors>electroglyph</Authors>
     <Copyright>Copyright (c) 2026, electroglyph</Copyright>
