@@ -5,7 +5,7 @@ name = "qdrant-edge-cabi"
 # Binding release line, equal to the C# `NativeLoader.ExpectedVersion`.
 # The underlying engine (`qdrant-edge-ffi`, see ffi/Cargo.toml) stays on its
 # own line; bump together by hand when the engine moves.
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Qdrant Team <info@qdrant.tech>"]
 license = "Apache-2.0"
 edition = "2024"
@@ -18,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Engine sources live in the pinned `third_party/qdrant` submodule
-# (qdrant @ 016542aa; the C ABI depends on its engine types). A plain
+# (qdrant @ 222b2e44 v1.20.0; the C ABI depends on its engine types). A plain
 # `git clone --recurse-submodules` provides it; this crate intentionally
 # stays out of the upstream workspace so that repo is untouched.
 edge = { path = "../../third_party/qdrant/lib/edge" }

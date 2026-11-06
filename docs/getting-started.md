@@ -60,8 +60,8 @@ if (!NativeLoader.IsAvailable)
 }
 ```
 
-`NativeLoader.ExpectedVersion` is `"0.10.0"` and matches
-`src/Qdrant.Edge/Qdrant.Edge.csproj` (`VersionPrefix 0.10.0`) and
+`NativeLoader.ExpectedVersion` is `"0.11.0"` and matches
+`src/Qdrant.Edge/Qdrant.Edge.csproj` (`VersionPrefix 0.11.0`) and
 `native/cabi/Cargo.toml`. Without a staged library, `EdgeShard.Create` and
 `EdgeShard.Load` throw `EdgeOperationException`.
 

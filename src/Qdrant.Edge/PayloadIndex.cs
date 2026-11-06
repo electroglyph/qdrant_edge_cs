@@ -14,6 +14,19 @@ public sealed record KeywordIndexParams
 
     /// <summary>Whether prefix search is enabled.</summary>
     public bool? Prefix { get; init; }
+
+    /// <summary>Per-element array path, e.g. "offers" for "offers[].price".</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the nested path is invalid.</exception>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Integer index parameters.</summary>
@@ -34,13 +47,21 @@ public sealed record IntegerIndexParams
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
 
-    /// <summary>Validates the lookup/range combination.</summary>
+    /// <summary>Per-element array path, e.g. "offers" for "offers[].price".</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the lookup/range combination and the nested path.</summary>
     /// <exception cref="EdgeInvalidArgumentException">When both are disabled.</exception>
     public void Validate()
     {
         if (Lookup is false && Range is false)
         {
             throw new EdgeInvalidArgumentException("integer index must enable lookup, range, or both");
+        }
+
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
         }
     }
 }
@@ -56,6 +77,18 @@ public sealed record FloatIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Geo index parameters.</summary>
@@ -66,6 +99,18 @@ public sealed record GeoIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Text index parameters.</summary>
@@ -100,6 +145,27 @@ public sealed record TextIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Scoring parameters enabling BM25 ranking.</summary>
+    public TextScoringParams? Scoring { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates token lengths and the nested path.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the length window is inverted.</exception>
+    public void Validate()
+    {
+        if (MinTokenLen is ulong min && MaxTokenLen is ulong max && min > max)
+        {
+            throw new EdgeInvalidArgumentException("text index: 'min_token_len' can't be greater than 'max_token_len'");
+        }
+
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Boolean index parameters.</summary>
@@ -110,6 +176,18 @@ public sealed record BoolIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Datetime index parameters.</summary>
@@ -123,6 +201,18 @@ public sealed record DatetimeIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>UUID index parameters.</summary>
@@ -136,6 +226,18 @@ public sealed record UuidIndexParams
 
     /// <summary>Whether to build HNSW over the index.</summary>
     public bool? EnableHnsw { get; init; }
+
+    /// <summary>Per-element array path.</summary>
+    public string? Nested { get; init; }
+
+    /// <summary>Validates the nested path when supplied.</summary>
+    public void Validate()
+    {
+        if (Nested is not null)
+        {
+            EdgeValidation.CheckPayloadKey(Nested);
+        }
+    }
 }
 
 /// <summary>Payload index parameters union (8 index types).</summary>

@@ -85,11 +85,22 @@ pub(crate) fn parse_edge_config(v: &Value) -> Result<edge::EdgeConfig> {
             "config must define at least one of vectors or sparse_vectors",
         ));
     }
+    let wal_enabled = match field(v, "WalEnabled") {
+        None | Some(Value::Null) => None,
+        Some(raw) => Some(
+            raw.as_bool().ok_or_else(|| {
+                ApiError::invalid_argument(
+                    "config field \"WalEnabled\" must be a boolean".to_owned(),
+                )
+            })?,
+        ),
+    };
     Ok(edge::EdgeConfig {
         vectors,
         sparse_vectors,
         payload_memory: opt_memory(v, "config", "PayloadMemory")?,
         id_tracker_memory: opt_memory(v, "config", "IdTrackerMemory")?,
+        wal_enabled,
         ..Default::default()
     })
 }
@@ -193,6 +204,8 @@ fn opt_datatype(v: &Value, ctx: &str, key: &str) -> Result<Option<SegmentDatatyp
             1 => Ok(Some(SegmentDatatype::Float16)),
             2 => Ok(Some(SegmentDatatype::Uint8)),
             3 => Ok(Some(SegmentDatatype::Turbo4)),
+            4 => Ok(Some(SegmentDatatype::Turbo8)),
+            5 => Ok(Some(SegmentDatatype::Turbo16)),
             other => Err(ApiError::invalid_argument(format!(
                 "{ctx} field {key:?} has unknown datatype {other}"
             ))),
@@ -342,6 +355,7 @@ fn opt_turbo_bits(
             1 => Ok(Some(SegmentBits::Bits1_5)),
             2 => Ok(Some(SegmentBits::Bits2)),
             3 => Ok(Some(SegmentBits::Bits4)),
+            4 => Ok(Some(SegmentBits::Bits8)),
             other => Err(ApiError::invalid_argument(format!(
                 "{ctx} field \"Bits\" has unknown turbo bit size {other}"
             ))),
@@ -435,6 +449,8 @@ fn datatype_to_json(datatype: SegmentDatatype) -> Value {
         SegmentDatatype::Float16 => 1,
         SegmentDatatype::Uint8 => 2,
         SegmentDatatype::Turbo4 => 3,
+        SegmentDatatype::Turbo8 => 4,
+        SegmentDatatype::Turbo16 => 5,
     })
 }
 
@@ -520,6 +536,7 @@ fn quantization_to_json(q: &SegmentQuantizationConfig) -> Value {
                             SegmentBits::Bits1_5 => json!(1),
                             SegmentBits::Bits2 => json!(2),
                             SegmentBits::Bits4 => json!(3),
+                            SegmentBits::Bits8 => json!(4),
                         }
                     })
                     .unwrap_or(Value::Null),
@@ -615,6 +632,7 @@ pub(crate) fn edge_config_to_json(cfg: &edge::EdgeConfig) -> Value {
         "SparseVectorData": Value::Object(sparse_vectors),
         "PayloadMemory": opt_memory_to_json(cfg.requested_payload_memory()),
         "IdTrackerMemory": opt_memory_to_json(cfg.id_tracker_memory),
+        "WalEnabled": cfg.wal_enabled.map(Value::from).unwrap_or(Value::Null),
     })
 }
 
@@ -728,5 +746,47 @@ mod tests {
         let back = parse_edge_config(&out).unwrap();
         assert_eq!(back.vectors.len(), 2);
         assert_eq!(back.sparse_vectors.len(), 1);
+    }
+
+    #[test]
+    fn parse_edge_config_wal_enabled_round_trip() {
+        let v = json!({"VectorData": {"": {"Size": 4, "Distance": 2}}, "WalEnabled": false});
+        let cfg = parse_edge_config(&v).unwrap();
+        assert_eq!(cfg.wal_enabled, Some(false));
+        let out = edge_config_to_json(&cfg);
+        assert_eq!(out["WalEnabled"], json!(false));
+        let back = parse_edge_config(&out).unwrap();
+        assert_eq!(back.wal_enabled, Some(false));
+    }
+
+    #[test]
+    fn parse_edge_config_wal_enabled_rejects_non_bool() {
+        let v = json!({"VectorData": {"": {"Size": 4, "Distance": 2}}, "WalEnabled": 1});
+        let err = parse_edge_config(&v).unwrap_err();
+        assert!(err.message.contains("WalEnabled"), "{err:?}");
+    }
+
+    #[test]
+    fn parse_vector_datatype_turbo_variants() {
+        for (raw, expected) in [
+            (4, SegmentDatatype::Turbo8),
+            (5, SegmentDatatype::Turbo16),
+        ] {
+            let v = json!({"VectorData": {"": {"Size": 4, "Distance": 2, "Datatype": raw}}});
+            let cfg = parse_edge_config(&v).unwrap();
+            assert_eq!(cfg.vectors[""].datatype, Some(expected));
+        }
+
+        let bad = json!({"VectorData": {"": {"Size": 4, "Distance": 2, "Datatype": 9}}});
+        assert!(parse_edge_config(&bad).is_err());
+    }
+
+    #[test]
+    fn parse_turbo_bits8_round_trip() {
+        let v = json!({"VectorData": {"": {"Size": 4, "Distance": 2,
+            "QuantizationConfig": {"kind": "turbo", "Config": {"Bits": 4}}}}});
+        let cfg = parse_edge_config(&v).unwrap();
+        let out = edge_config_to_json(&cfg);
+        assert_eq!(out["VectorData"][""]["QuantizationConfig"]["Config"]["Bits"], json!(4));
     }
 }

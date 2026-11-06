@@ -11,7 +11,7 @@
     <AssemblyName>Qdrant.Edge</AssemblyName>
     <RootNamespace>Qdrant.Edge</RootNamespace>
     <PackageId>qdrant_edge_cs</PackageId>
-    <VersionPrefix>0.10.0</VersionPrefix>
+    <VersionPrefix>0.11.0</VersionPrefix>
     <Authors>electroglyph</Authors>
     <Copyright>Copyright (c) 2026, electroglyph</Copyright>
     <Description>Idiomatic C# interface for qdrant_edge (embedded single-shard vector search). Native engine via stable C ABI; managed DTOs with source-generated JSON.</Description>

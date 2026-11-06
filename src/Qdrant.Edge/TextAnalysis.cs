@@ -14,6 +14,9 @@ public enum TokenizerType
 
     /// <summary>Multilingual tokenizer.</summary>
     Multilingual,
+
+    /// <summary>Code tokenizer for identifiers.</summary>
+    Code,
 }
 
 /// <summary>Stopword source language (30 values, FFI order).</summary>
@@ -216,3 +219,17 @@ public sealed record SnowballStemmer(SnowballLanguage Language) : Stemmer;
 
 /// <summary>Disabled stemmer.</summary>
 public sealed record DisabledStemmer : Stemmer;
+
+/// <summary>Text scoring type for ranked text indexes.</summary>
+public enum TextScoringType
+{
+    /// <summary>BM25 scoring.</summary>
+    Bm25,
+}
+
+/// <summary>Text scoring parameters enabling ranking over a text index.</summary>
+public sealed record TextScoringParams
+{
+    /// <summary>Scorer type.</summary>
+    public required TextScoringType Type { get; init; }
+}

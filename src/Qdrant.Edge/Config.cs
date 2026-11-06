@@ -178,6 +178,9 @@ public sealed record EdgeConfig
     /// <summary>Id-tracker memory placement.</summary>
     public Memory? IdTrackerMemory { get; init; }
 
+    /// <summary>Whether updates use a write-ahead log. Null means enabled.</summary>
+    public bool? WalEnabled { get; init; }
+
     /// <summary>Validates that at least one vector family exists and every field is in range.</summary>
     /// <exception cref="EdgeInvalidArgumentException">When the config is empty or invalid.</exception>
     public void Validate()

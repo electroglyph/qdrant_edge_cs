@@ -30,6 +30,12 @@ public enum VectorStorageDatatype
 
     /// <summary>Turbo 4-bit.</summary>
     Turbo4,
+
+    /// <summary>Turbo 8-bit.</summary>
+    Turbo8,
+
+    /// <summary>Turbo 16-bit.</summary>
+    Turbo16,
 }
 
 /// <summary>Multi-vector comparator.</summary>
@@ -164,6 +170,9 @@ public enum TurboQuantBitSize
 
     /// <summary>4 bits.</summary>
     Bits4,
+
+    /// <summary>8 bits.</summary>
+    Bits8,
 }
 
 /// <summary>Turbo quantization parameters.</summary>

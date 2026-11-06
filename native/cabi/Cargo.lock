@@ -136,6 +136,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "arc-swap"
+version = "1.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "380962b3d93b99642e50b9febf72c071e97e8b32d86eae9cf4ef582bb960ae6e"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -505,11 +514,13 @@ version = "0.0.0"
 dependencies = [
  "ahash",
  "aligned-vec",
+ "arc-swap",
  "atomicwrites",
  "bincode 1.3.3",
  "bitvec",
  "bytemuck",
  "chrono",
+ "ecow",
  "fs-err",
  "fs4",
  "fs_extra",
@@ -525,6 +536,7 @@ dependencies = [
  "ordered-float 5.5.0",
  "parking_lot",
  "ph",
+ "pin-project-lite",
  "procfs",
  "quick_cache",
  "rand 0.10.3",
@@ -1746,6 +1758,8 @@ version = "0.0.0"
 dependencies = [
  "bytes",
  "common",
+ "crc-fast",
+ "data-encoding",
  "futures",
  "http",
  "io_bridge",
@@ -2472,7 +2486,7 @@ dependencies = [
 
 [[package]]
 name = "qdrant-edge-cabi"
-version = "0.9.0"
+version = "0.11.0"
 dependencies = [
  "edge",
  "segment",
@@ -3049,6 +3063,7 @@ dependencies = [
  "atomic_refcell",
  "atomicwrites",
  "bincode 1.3.3",
+ "bitpacking",
  "bitvec",
  "blink-alloc",
  "blobstore",

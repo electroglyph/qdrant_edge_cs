@@ -14,7 +14,8 @@ below are 4-dim float arrays.
   `RecommendStrategy.BestScore` when strategy is null.
 - `ScoringQuery` wraps it for `QueryRequest`: `CreateVector`,
   `CreateFusion`, `CreateOrderBy`, `Formula`, `Mmr` (a variant, not a
-  standalone class), `CreateSample`.
+  standalone class), `CreateSample`, `CreateText` (BM25 over a scoring text
+  index).
 - `Fusion.Rrf(k, weights?)` takes an optional per-source weight list;
   `Fusion.Dbsf()` takes none. RRF weights must be finite when present.
 - `OrderBy` sorts by a payload key with optional `Direction` and `StartFrom`
@@ -214,6 +215,24 @@ Console.WriteLine($"Prefetch chain hits: {shard.Query(chained).Count}");
 A 65-deep chain validates (depths 0..64); 66 fails client-side with
 `EdgeInvalidArgumentException`. `SearchParams` carries only the three FFI
 fields; `HnswEf` has no client-side range check.
+
+## Text queries (BM25 over a scoring text index)
+
+```csharp
+shard.Update(UpdateOperation.CreateFieldIndexWithParams(
+    "title",
+    PayloadIndexParams.Text(new TextIndexParams
+    {
+        Scoring = new TextScoringParams { Type = TextScoringType.Bm25 },
+    })));
+ScoringQuery text = ScoringQuery.CreateText("title", "quick fox");
+ScoringQuery textTuned = ScoringQuery.CreateText(
+    "title", "quick fox", TextQueryScoring.Bm25(new Bm25Params { K = 1.2f, B = 0.75f }));
+Console.WriteLine($"Text hits: {shard.Query(new QueryRequest { Limit = 5, Query = text }).Count}");
+```
+
+`K` must be finite and non-negative; `B` must be finite in [0, 1]. The field
+must have a scoring text index; otherwise the engine rejects the query.
 
 ## Common mistakes
 

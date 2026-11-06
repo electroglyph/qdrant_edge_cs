@@ -380,6 +380,29 @@ pub(crate) fn parse_scoring_query(v: &Value) -> Result<edge::ScoringQuery> {
                 ))),
             }
         }
+        "text" => {
+            let field_name = as_str(required(v, "Field", CTX)?, CTX, "Field")?;
+            let query = as_str(required(v, "Query", CTX)?, CTX, "Query")?;
+            if field_name.trim().is_empty() {
+                return Err(ApiError::invalid_argument(format!(
+                    "{CTX} field \"Field\" must be a non-empty path"
+                )));
+            }
+
+            if query.trim().is_empty() {
+                return Err(ApiError::invalid_argument(format!(
+                    "{CTX} field \"Query\" must be a non-empty string"
+                )));
+            }
+
+            let path = super::filter::parse_key(field_name, CTX)?;
+            let builder = edge::TextQueryBuilder::new(path, query.to_owned());
+            let builder = match crate::json::field(v, "Scoring") {
+                None | Some(Value::Null) => builder,
+                Some(raw) => builder.scoring(parse_text_scoring(raw)?),
+            };
+            Ok(builder.build())
+        }
         unknown => Err(ApiError::invalid_argument(format!(
             "{CTX} has unknown kind {unknown:?}"
         ))),
@@ -429,6 +452,53 @@ fn parse_fusion(v: &Value) -> Result<edge::Fusion> {
 }
 
 // ── Order-by ────────────────────────────────────────────────────────────────
+
+/// Parse the optional text-query scorer (`{"kind":"bm25","Params":{"K":…,"B":…}}`).
+fn parse_text_scoring(v: &Value) -> Result<edge::TextQueryScoring> {
+    const CTX: &str = "text scoring";
+    match kind(v, CTX)? {
+        "bm25" => {
+            let params = required(v, "Params", CTX)?;
+            let k = match field(params, "K") {
+                None | Some(Value::Null) => None,
+                Some(raw) => Some({
+                    let number = raw.as_f64().ok_or_else(|| {
+                        ApiError::invalid_argument(format!("{CTX} field \"K\" must be a number"))
+                    })?;
+                    if !number.is_finite()
+                        || number < 0.0
+                        || number > f64::from(f32::MAX)
+                    {
+                        return Err(ApiError::invalid_argument(format!(
+                            "bm25 k ({number}) must be finite and non-negative"
+                        )));
+                    }
+
+                    number as f32
+                }),
+            };
+            let b = match field(params, "B") {
+                None | Some(Value::Null) => None,
+                Some(raw) => Some({
+                    let number = raw.as_f64().ok_or_else(|| {
+                        ApiError::invalid_argument(format!("{CTX} field \"B\" must be a number"))
+                    })?;
+                    if !number.is_finite() || !(0.0..=1.0).contains(&number) {
+                        return Err(ApiError::invalid_argument(format!(
+                            "bm25 b ({number}) must be within [0, 1]"
+                        )));
+                    }
+
+                    number as f32
+                }),
+            };
+            Ok(edge::TextQueryScoring::Bm25(edge::Bm25Params { k, b }))
+        }
+        unknown => Err(ApiError::invalid_argument(format!(
+            "{CTX} has unknown kind {unknown:?}"
+        ))),
+    }
+}
 
 pub(crate) fn parse_order_by(v: &Value) -> Result<edge::OrderByInterface> {
     Ok(edge::OrderByInterface::Struct(parse_order_by_struct(v)?))
@@ -819,6 +889,36 @@ mod tests {
             parse_scoring_query(&formula).expect("formula parses"),
             edge::ScoringQuery::Formula(_)
         ));
+        let text = parse(
+            r#"{"kind":"text","Field":"title","Query":"hello","Scoring":{"kind":"bm25","Params":{"K":1.2,"B":0.75}}}"#,
+        );
+        assert!(matches!(
+            parse_scoring_query(&text).expect("text parses"),
+            edge::ScoringQuery::Text(_)
+        ));
+        let text_defaults = parse(r#"{"kind":"text","Field":"title","Query":"hello","Scoring":null}"#);
+        assert!(matches!(
+            parse_scoring_query(&text_defaults).expect("text defaults parse"),
+            edge::ScoringQuery::Text(_)
+        ));
+        let bad_b = parse(
+            r#"{"kind":"text","Field":"title","Query":"hello","Scoring":{"kind":"bm25","Params":{"B":2.0}}}"#,
+        );
+        assert!(
+            parse_scoring_query(&bad_b)
+                .unwrap_err()
+                .message
+                .contains("bm25 b")
+        );
+        let huge_k = parse(
+            r#"{"kind":"text","Field":"title","Query":"hello","Scoring":{"kind":"bm25","Params":{"K":1e40}}}"#,
+        );
+        assert!(
+            parse_scoring_query(&huge_k)
+                .unwrap_err()
+                .message
+                .contains("bm25 k")
+        );
     }
 
     #[test]
@@ -887,6 +987,7 @@ mod tests {
             vector: None,
             shard_key: None,
             order_value: None,
+            location: None,
         };
         let list = scored_list_to_json(vec![hit.clone()]);
         assert_eq!(list[0]["Id"], json!({"kind":"num","Value":7}));

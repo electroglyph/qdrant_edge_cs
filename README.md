@@ -4,14 +4,14 @@ Full guides: [`docs/README.md`](docs/README.md) (start with [`docs/getting-start
 
 Embedded single-shard vector search for .NET: idiomatic C# over the Qdrant edge engine, which stays in Rust behind a small JSON C ABI. No server, no gRPC — a shard is a directory on disk plus a native library.
 
-- Package `qdrant_edge_cs`, version `0.10.0`, targets `net10.0` (C# 14, nullable enabled).
+- Package `qdrant_edge_cs`, version `0.11.0`, targets `net10.0` (C# 14, nullable enabled).
 - Read-write `EdgeShard`: create/load, point/vector/payload updates, ANN query, scroll, facet, groups, snapshots.
 - Every request is validated client-side before touching native; failures throw typed `EdgeException`s.
 
 ## Prerequisites
 
 - .NET 10 SDK.
-- Rust toolchain (only to build the native engine once).
+- Rust toolchain (only for source builds; not needed with the NuGet package).
 
 Get the code with submodules (the engine lives in pinned `third_party/qdrant`; the pin is load-bearing):
 
@@ -20,7 +20,22 @@ git clone --recurse-submodules https://github.com/electroglyph/qdrant_edge_cs.gi
 cd qdrant_edge_cs
 ```
 
-## Build the native library
+## Install via NuGet (recommended)
+
+```sh
+dotnet add package qdrant_edge_cs
+```
+
+The package targets `net10.0` and ships prebuilt native engines for all six
+RIDs (`linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`, `win-x64`,
+`win-arm64`) as `runtimes/` assets, so no Rust toolchain or manual staging is
+needed:
+
+```csharp
+using Qdrant.Edge;
+```
+
+## Build the native library (source builds only)
 
 ```sh
 cargo build -p qdrant-edge-cabi --release --manifest-path native/cabi/Cargo.toml
@@ -288,6 +303,7 @@ ScoringQuery.CreateFusion(Fusion.Rrf(60));
 ScoringQuery.Mmr(NamedVector.Dense(a), 0.5f, 100);
 ScoringQuery.CreateSample(Sample.Random);
 ScoringQuery.Formula(Expression.Sum([Expression.Variable("$score"), Expression.Constant(1f)]));
+ScoringQuery.CreateText("title", "quick fox");
 ```
 
 `WithPayload` is `Bool / CreateFields / Exclude`; `WithVector` is `Bool / CreateNames`. Both default off for queries (retrieve defaults payload on).
@@ -390,4 +406,4 @@ Native-guarded tests execute for real when the library is staged (see above); ot
 
 ## Not in v1
 
-Read-only follower (`live_reload`), batch writer (`apply_batch`/`preview_batch`), and the `Bm25` embed helper are engine-only surfaces with no FFI binding — see `src/Qdrant.Edge/README.md` §"v2 gaps".
+Read-only follower (`live_reload`), batch writer (`apply_batch`/`preview_batch`), and the `Bm25` embed helper (`embed_query`/`embed_document`) are engine-only surfaces with no FFI binding — see `src/Qdrant.Edge/README.md` §"v2 gaps". BM25 text ranking (`TextIndexParams.Scoring` + `ScoringQuery.CreateText`) IS supported since engine v1.20.0.

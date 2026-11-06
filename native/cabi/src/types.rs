@@ -481,6 +481,7 @@ fn schema_params_to_json(params: &edge::PayloadSchemaParams) -> Value {
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
             "Prefix": opt_bool_json(p.prefix),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Integer(p) => json!({"kind": "integer", "Config": {
             "Lookup": opt_bool_json(p.lookup),
@@ -488,15 +489,18 @@ fn schema_params_to_json(params: &edge::PayloadSchemaParams) -> Value {
             "IsPrincipal": opt_bool_json(p.is_principal),
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Float(p) => json!({"kind": "float", "Config": {
             "IsPrincipal": opt_bool_json(p.is_principal),
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Geo(p) => json!({"kind": "geo", "Config": {
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Text(p) => json!({"kind": "text", "Config": {
             // Declaration order verified against the C# `TokenizerType` enum.
@@ -510,20 +514,25 @@ fn schema_params_to_json(params: &edge::PayloadSchemaParams) -> Value {
             "Memory": opt_memory_number(p.memory),
             "Stemmer": p.stemmer.as_ref().map(stemmer_to_json).unwrap_or(Value::Null),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Scoring": p.scoring.as_ref().map(|_| json!({"Type": 0})).unwrap_or(Value::Null),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Bool(p) => json!({"kind": "bool", "Config": {
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Datetime(p) => json!({"kind": "datetime", "Config": {
             "IsPrincipal": opt_bool_json(p.is_principal),
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
         edge::PayloadSchemaParams::Uuid(p) => json!({"kind": "uuid", "Config": {
             "IsTenant": opt_bool_json(p.is_tenant),
             "Memory": opt_memory_number(p.memory),
             "EnableHnsw": opt_bool_json(p.enable_hnsw),
+            "Nested": p.nested.as_ref().map(|n| Value::from(n.to_string())).unwrap_or(Value::Null),
         }}),
     }
 }
@@ -637,6 +646,7 @@ mod tests {
             vector: Some(edge::VectorStructInternal::Single(vec![1.0, 2.0])),
             shard_key: None,
             order_value: Some(SegmentOrderValue::Int(9)),
+            location: None,
         };
         let out = scored_point_to_json(&point);
         assert_eq!(out["Id"], json!({"kind": "num", "Value": 7}));

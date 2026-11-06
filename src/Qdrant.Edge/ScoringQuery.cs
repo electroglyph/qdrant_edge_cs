@@ -1,6 +1,6 @@
 namespace Qdrant.Edge;
 
-/// <summary>Scoring query: Vector/Fusion/OrderBy/Formula/Mmr/Sample.</summary>
+/// <summary>Scoring query: Vector/Fusion/OrderBy/Formula/Mmr/Sample/Text.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(VectorScoringQuery), "vector")]
 [JsonDerivedType(typeof(FusionScoringQuery), "fusion")]
@@ -8,6 +8,7 @@ namespace Qdrant.Edge;
 [JsonDerivedType(typeof(FormulaScoringQuery), "formula")]
 [JsonDerivedType(typeof(MmrScoringQuery), "mmr")]
 [JsonDerivedType(typeof(SampleScoringQuery), "sample")]
+[JsonDerivedType(typeof(TextScoringQuery), "text")]
 public abstract record ScoringQuery
 {
     /// <summary>Creates a vector scoring query.</summary>
@@ -37,6 +38,12 @@ public abstract record ScoringQuery
     /// <summary>Creates a sampling query.</summary>
     /// <param name="sample">Sample strategy.</param>
     public static ScoringQuery CreateSample(Sample sample) => new SampleScoringQuery(sample);
+
+    /// <summary>Creates a BM25 text scoring query over a text-indexed field.</summary>
+    /// <param name="field">Payload field with a scoring text index.</param>
+    /// <param name="query">Text to search for.</param>
+    /// <param name="scoring">Optional scorer parameters.</param>
+    public static ScoringQuery CreateText(string field, string query, TextQueryScoring? scoring = null) => new TextScoringQuery(field, query, scoring);
 
     /// <summary>Validates nested query, formula, and mmr shapes.</summary>
     /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
@@ -79,6 +86,12 @@ public abstract record ScoringQuery
                 mmr.ValidateMmr();
                 break;
             case SampleScoringQuery:
+                break;
+            case TextScoringQuery(var field, var query, var scoring):
+                ArgumentException.ThrowIfNullOrWhiteSpace(field, nameof(field));
+                ArgumentException.ThrowIfNullOrWhiteSpace(query, nameof(query));
+                EdgeValidation.CheckPayloadKey(field);
+                scoring?.Validate();
                 break;
             default:
                 throw new EdgeInvalidArgumentException("unknown scoring query shape");
@@ -126,6 +139,74 @@ public sealed record MmrScoringQuery(NamedVector Vector, float Lambda, ulong Can
 /// <summary>Sample scoring query.</summary>
 /// <param name="Sample">Sample strategy.</param>
 public sealed record SampleScoringQuery(Sample Sample) : ScoringQuery;
+
+/// <summary>BM25 parameters for a text scoring query.</summary>
+public sealed record Bm25Params
+{
+    /// <summary>Term frequency saturation, non-negative.</summary>
+    public float? K { get; init; }
+
+    /// <summary>Document length normalization in [0, 1].</summary>
+    public float? B { get; init; }
+
+    /// <summary>Validates finiteness and documented ranges.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When a bound is violated.</exception>
+    public void Validate()
+    {
+        if (K is float k)
+        {
+            EdgeValidation.CheckFinite("bm25 k", k);
+            if (k < 0f)
+            {
+                throw new EdgeInvalidArgumentException($"bm25 k {k} must be non-negative");
+            }
+        }
+
+        if (B is float b)
+        {
+            EdgeValidation.CheckFinite("bm25 b", b);
+            if (b is < 0f or > 1f)
+            {
+                throw new EdgeInvalidArgumentException($"bm25 b {b} must be in [0, 1]");
+            }
+        }
+    }
+}
+
+/// <summary>Scorer for a text query.</summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(Bm25TextScoring), "bm25")]
+public abstract record TextQueryScoring
+{
+    /// <summary>Creates BM25 scoring.</summary>
+    /// <param name="params">BM25 parameters.</param>
+    public static TextQueryScoring Bm25(Bm25Params @params) => new Bm25TextScoring(@params);
+
+    /// <summary>Validates nested scorer parameters.</summary>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    public void Validate()
+    {
+        switch (this)
+        {
+            case Bm25TextScoring(var @params):
+                ArgumentNullException.ThrowIfNull(@params, nameof(@params));
+                @params.Validate();
+                break;
+            default:
+                throw new EdgeInvalidArgumentException("unknown text scoring shape");
+        }
+    }
+}
+
+/// <summary>BM25 text scoring.</summary>
+/// <param name="Params">BM25 parameters.</param>
+public sealed record Bm25TextScoring(Bm25Params Params) : TextQueryScoring;
+
+/// <summary>Text scoring query ranking by BM25 over a text index.</summary>
+/// <param name="Field">Payload field with a scoring text index.</param>
+/// <param name="Query">Text to search for.</param>
+/// <param name="Scoring">Optional scorer parameters.</param>
+public sealed record TextScoringQuery(string Field, string Query, TextQueryScoring? Scoring) : ScoringQuery;
 
 /// <summary>Search tuning parameters (FFI shape: hnsw_ef/exact/indexed_only only).</summary>
 public sealed record SearchParams

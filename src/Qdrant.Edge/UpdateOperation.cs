@@ -241,10 +241,7 @@ public abstract record UpdateOperation
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fieldName, nameof(fieldName));
         ArgumentNullException.ThrowIfNull(indexParams, nameof(indexParams));
-        if (indexParams is IntegerPayloadIndex(var integer))
-        {
-            integer.Validate();
-        }
+        ValidateIndexParams(indexParams);
 
         return new CreateFieldIndexWithParamsOperation(fieldName, indexParams);
     }
@@ -392,10 +389,7 @@ public abstract record UpdateOperation
             case CreateFieldIndexWithParamsOperation(var fieldName, var indexParams):
                 ArgumentException.ThrowIfNullOrWhiteSpace(fieldName, nameof(fieldName));
                 ArgumentNullException.ThrowIfNull(indexParams, nameof(indexParams));
-                if (indexParams is IntegerPayloadIndex(var integer))
-                {
-                    integer.Validate();
-                }
+                ValidateIndexParams(indexParams);
 
                 break;
             case DeleteFieldIndexOperation(var fieldName):
@@ -413,6 +407,50 @@ public abstract record UpdateOperation
                 break;
             default:
                 throw new EdgeInvalidArgumentException("unknown update operation shape");
+        }
+    }
+
+    /// <summary>Validates payload index parameters without trusting factory paths.</summary>
+    /// <param name="indexParams">Index parameters.</param>
+    /// <exception cref="EdgeInvalidArgumentException">When the shape is invalid.</exception>
+    private static void ValidateIndexParams(PayloadIndexParams indexParams)
+    {
+        switch (indexParams)
+        {
+            case KeywordPayloadIndex(var keyword):
+                ArgumentNullException.ThrowIfNull(keyword, nameof(keyword));
+                keyword.Validate();
+                break;
+            case IntegerPayloadIndex(var integer):
+                ArgumentNullException.ThrowIfNull(integer, nameof(integer));
+                integer.Validate();
+                break;
+            case FloatPayloadIndex(var floatParams):
+                ArgumentNullException.ThrowIfNull(floatParams, nameof(floatParams));
+                floatParams.Validate();
+                break;
+            case GeoPayloadIndex(var geo):
+                ArgumentNullException.ThrowIfNull(geo, nameof(geo));
+                geo.Validate();
+                break;
+            case TextPayloadIndex(var text):
+                ArgumentNullException.ThrowIfNull(text, nameof(text));
+                text.Validate();
+                break;
+            case BoolPayloadIndex(var boolean):
+                ArgumentNullException.ThrowIfNull(boolean, nameof(boolean));
+                boolean.Validate();
+                break;
+            case DatetimePayloadIndex(var datetime):
+                ArgumentNullException.ThrowIfNull(datetime, nameof(datetime));
+                datetime.Validate();
+                break;
+            case UuidPayloadIndex(var uuid):
+                ArgumentNullException.ThrowIfNull(uuid, nameof(uuid));
+                uuid.Validate();
+                break;
+            default:
+                throw new EdgeInvalidArgumentException("unknown payload index shape");
         }
     }
 

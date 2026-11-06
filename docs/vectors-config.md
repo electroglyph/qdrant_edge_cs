@@ -18,9 +18,10 @@ fresh temp dir per config so incompatible configs do not collide.
   `FullScanThreshold`, `Datatype`, `Modifier` (v1 search uses `Modifier.Idf`),
   `Memory`.
 - `Distance` has 4 values (`Cosine`, `Euclid`, `Dot`, `Manhattan`).
-  `Memory` has 3 (`Cold`, `Cached`, `Pinned`). `VectorStorageDatatype` has 4
-  (`Float32`, `Float16`, `Uint8`, `Turbo4`). `MultiVectorConfig` has one
-  comparator (`MaxSim`).
+  `Memory` has 3 (`Cold`, `Cached`, `Pinned`). `VectorStorageDatatype` has 6
+  (`Float32`, `Float16`, `Uint8`, `Turbo4`, `Turbo8`, `Turbo16`). `MultiVectorConfig` has one
+  comparator (`MaxSim`). `TurboQuantBitSize` has 5 (`Bits1`, `Bits1Point5`,
+  `Bits2`, `Bits4`, `Bits8`).
 - `HnswIndexConfig` bounds: `M`/`PayloadM` <= 2048, `EfConstruct` 4..=100000,
   `MaxIndexingThreads` <= 1024. `OptimizersConfig` bounds: finite
   `DeletedThreshold` in [0, 1] plus `_Kb` fields (`MaxSegmentSizeKb` /
@@ -30,10 +31,16 @@ fresh temp dir per config so incompatible configs do not collide.
   `Turbo`) for parity, but the engine keeps only `Binary`/`Turbo` for
   appendable segments: do not assert `Scalar`/`Product` survive optimize.
 - Payload indexes expose 8 types; `IntegerIndexParams` with
-  `Lookup: false, Range: false` is rejected.
-- Text analysis: `TokenizerType` 4 values, `Stemmer` (`Snowball` 19
+  `Lookup: false, Range: false` is rejected. Every type accepts an optional
+  `Nested` array path (e.g. `offers` for `offers[].price`); text indexes
+  additionally accept `Scoring` (`TextScoringType.Bm25`) enabling BM25 ranking.
+- Text analysis: `TokenizerType` 5 values (`Prefix`, `Whitespace`, `Word`,
+  `Multilingual`, `Code`), `Stemmer` (`Snowball` 19
   languages / `Disabled`), `Stopwords` (`CreateLanguage` / `Set`),
   `Language` 30 values.
+- `EdgeConfig.WalEnabled` (null means enabled) is fixed at creation; loading
+  with a different value fails. Without a WAL, updates are durable only after
+  `Flush()`.
 - Config merge: `Load(path)` with null keeps the stored config; reloads apply
   tunables; a missing config file derives from the directory; an
   incompatible size change (for example `size: 1` to `size: 2`) fails.
@@ -186,7 +193,7 @@ All four are accepted at load and echo via `GetConfig()`. After `Optimize`,
 only `Binary`/`Turbo` are guaranteed to survive on appendable segments;
 never assert `Scalar`/`Product` round-trip through optimize.
 
-`VectorStorageDatatype` (`Float32`, `Float16`, `Uint8`, `Turbo4`) rides on
+`VectorStorageDatatype` (`Float32`, `Float16`, `Uint8`, `Turbo4`, `Turbo8`, `Turbo16`) rides on
 the same field:
 
 ```csharp
@@ -199,6 +206,50 @@ EdgeConfig typed = new()
 };
 using EdgeShard typedShard = EdgeShard.Create(FreshDir("datatype"), typed);
 Console.WriteLine($"Datatype kept: {typedShard.GetConfig().VectorData[""].Datatype}");
+```
+
+WAL-less shards skip the write-ahead log (durable only after `Flush()`):
+
+```csharp
+EdgeConfig walLess = new()
+{
+    VectorData = new Dictionary<string, VectorDataConfig>
+    {
+        [""] = new VectorDataConfig { Size = 4, Distance = Distance.Dot },
+    },
+    WalEnabled = false,
+};
+using EdgeShard walShard = EdgeShard.Create(FreshDir("wal"), walLess);
+walShard.Update(UpdateOperation.UpsertPoints([new Point
+{
+    Id = PointId.FromNumber(1),
+    Vector = Vector.Single([1f, 2f, 3f, 4f]),
+}]));
+walShard.Flush();
+```
+
+BM25 text ranking needs a scoring index plus a text query:
+
+```csharp
+shard.Update(UpdateOperation.CreateFieldIndexWithParams(
+    "title",
+    PayloadIndexParams.Text(new TextIndexParams
+    {
+        Scoring = new TextScoringParams { Type = TextScoringType.Bm25 },
+    })));
+IReadOnlyList<ScoredPoint> ranked = shard.Query(new QueryRequest
+{
+    Limit = 5,
+    Query = ScoringQuery.CreateText("title", "quick fox"),
+});
+```
+
+Per-element nested indexes address array objects separately:
+
+```csharp
+shard.Update(UpdateOperation.CreateFieldIndexWithParams(
+    "offers[].price",
+    PayloadIndexParams.Keyword(new KeywordIndexParams { Nested = "offers" })));
 ```
 
 ## All eight payload index types, Text options, and the Integer guard
@@ -254,7 +305,7 @@ catch (EdgeInvalidArgumentException ex)
 }
 ```
 
-`TokenizerType` has `Prefix`/`Whitespace`/`Word`/`Multilingual`.
+`TokenizerType` has `Prefix`/`Whitespace`/`Word`/`Multilingual`/`Code`.
 `Language` covers 30 stopword languages; `SnowballLanguage` covers 19
 stemmer languages. Custom stopwords take optional language plus custom
 token lists.

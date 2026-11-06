@@ -428,7 +428,7 @@ fn opt_modifier(v: &Value, ctx: &str, key: &str) -> Result<Option<edge::Modifier
     }
 }
 
-/// Map the C# `VectorStorageDatatype` ordinal (Float32/Float16/Uint8/Turbo4);
+/// Map the C# `VectorStorageDatatype` ordinal (Float32/Float16/Uint8/Turbo4/Turbo8/Turbo16);
 /// absent and null mean the engine default.
 fn opt_datatype(
     v: &Value,
@@ -441,6 +441,8 @@ fn opt_datatype(
         Some(1) => Ok(Some(edge::VectorStorageDatatype::Float16)),
         Some(2) => Ok(Some(edge::VectorStorageDatatype::Uint8)),
         Some(3) => Ok(Some(edge::VectorStorageDatatype::Turbo4)),
+        Some(4) => Ok(Some(edge::VectorStorageDatatype::Turbo8)),
+        Some(5) => Ok(Some(edge::VectorStorageDatatype::Turbo16)),
         Some(other) => Err(ApiError::invalid_argument(format!(
             "{ctx} field {key:?} has unknown datatype {other}"
         ))),
@@ -461,13 +463,14 @@ fn opt_memory(v: &Value, ctx: &str, key: &str) -> Result<Option<edge::Memory>> {
     }
 }
 
-/// Map the C# `TokenizerType` ordinal (Prefix/Whitespace/Word/Multilingual).
+/// Map the C# `TokenizerType` ordinal (Prefix/Whitespace/Word/Multilingual/Code).
 fn parse_tokenizer(raw: u64, ctx: &str) -> Result<segment_index::TokenizerType> {
     match raw {
         0 => Ok(segment_index::TokenizerType::Prefix),
         1 => Ok(segment_index::TokenizerType::Whitespace),
         2 => Ok(segment_index::TokenizerType::Word),
         3 => Ok(segment_index::TokenizerType::Multilingual),
+        4 => Ok(segment_index::TokenizerType::Code),
         _ => Err(ApiError::invalid_argument(format!(
             "{ctx} field \"Tokenizer\" has unknown tokenizer {raw}"
         ))),
@@ -557,6 +560,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
                     prefix: opt_bool(config, ctx, "Prefix")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -578,6 +582,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -590,6 +595,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -601,6 +607,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -616,6 +623,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -628,6 +636,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -640,6 +649,7 @@ fn parse_index_params(v: &Value) -> Result<edge::PayloadSchemaParams> {
                     on_disk: None,
                     memory: opt_memory(config, ctx, "Memory")?,
                     enable_hnsw: opt_bool(config, ctx, "EnableHnsw")?,
+                    nested: nested_path(opt_nested(config, ctx)?)?,
                 },
             ))
         }
@@ -683,7 +693,60 @@ fn parse_text_config(v: &Value, ctx: &str) -> Result<segment_index::TextIndexPar
         memory: opt_memory(v, ctx, "Memory")?,
         stemmer,
         enable_hnsw: opt_bool(v, ctx, "EnableHnsw")?,
+        scoring: parse_text_scoring(v, ctx)?,
+        nested: nested_path(opt_nested(v, ctx)?)?,
     })
+}
+
+/// Parse the optional `Scoring` text-index params (`{"Type": 0}` for BM25).
+fn parse_text_scoring(
+    v: &Value,
+    ctx: &str,
+) -> Result<Option<segment_index::TextScoringParams>> {
+    match field(v, "Scoring") {
+        None | Some(Value::Null) => Ok(None),
+        Some(raw) => {
+            let scoring_type = match opt_u64(raw, ctx, "Type")? {
+                None => 0,
+                Some(0) => 0,
+                Some(other) => {
+                    return Err(ApiError::invalid_argument(format!(
+                        "{ctx} field \"Scoring.Type\" has unknown text scoring type {other}"
+                    )));
+                }
+            };
+            match scoring_type {
+                0 => Ok(Some(segment_index::TextScoringParams {
+                    r#type: segment_index::TextScoringType::Bm25,
+                })),
+                _ => Err(ApiError::invalid_argument(format!(
+                    "{ctx} field \"Scoring.Type\" has unknown text scoring type {scoring_type}"
+                ))),
+            }
+        }
+    }
+}
+
+/// Read the optional per-element `Nested` array path; absent and null mean per-point.
+fn opt_nested(v: &Value, ctx: &str) -> Result<Option<String>> {
+    match opt_str(v, ctx, "Nested")? {
+        None => Ok(None),
+        Some(text) if text.is_empty() => Err(ApiError::invalid_argument(format!(
+            "{ctx} field \"Nested\" must be a non-empty path"
+        ))),
+        Some(text) => Ok(Some(text.to_owned())),
+    }
+}
+
+/// Parse the array path of a per-element index.
+fn nested_path(nested: Option<String>) -> Result<Option<edge::JsonPath>> {
+    nested
+        .map(|path| {
+            path.parse().map_err(|_: ()| {
+                ApiError::invalid_argument(format!("invalid nested path: {path}"))
+            })
+        })
+        .transpose()
 }
 
 /// Parse the `Stopwords` kind-union (`"language"` with an ordinal, or `"set"`
@@ -773,4 +836,50 @@ fn token_len(name: &str, len: Option<u64>) -> Result<Option<usize>> {
             .map_err(|_| ApiError::invalid_argument(format!("{name} {len} out of range")))
     })
     .transpose()
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    fn params(raw: serde_json::Value) -> edge::PayloadSchemaParams {
+        parse_index_params(&raw).expect("index params parse")
+    }
+
+    #[test]
+    fn parse_keyword_nested_round_trip() {
+        let out = params(json!({"kind": "keyword", "Config": {"Nested": "offers"}}));
+        assert!(matches!(
+            out,
+            edge::PayloadSchemaParams::Keyword(ref p) if p.nested.as_ref().is_some_and(|n| n.to_string() == "offers")
+        ));
+        let bad = json!({"kind": "keyword", "Config": {"Nested": ""}});
+        assert!(parse_index_params(&bad).is_err());
+    }
+
+    #[test]
+    fn parse_text_scoring_and_code_tokenizer() {
+        let out = params(json!({"kind": "text", "Config": {
+            "Tokenizer": 4,
+            "Scoring": {"Type": 0},
+            "Nested": "docs",
+        }}));
+        match out {
+            edge::PayloadSchemaParams::Text(p) => {
+                assert!(matches!(
+                    p.tokenizer,
+                    segment_index::TokenizerType::Code
+                ));
+                assert!(p.scoring.is_some());
+                assert!(p.nested.as_ref().is_some_and(|n| n.to_string() == "docs"));
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+        let bad_tokenizer = json!({"kind": "text", "Config": {"Tokenizer": 9}});
+        assert!(parse_index_params(&bad_tokenizer).is_err());
+        let bad_scoring = json!({"kind": "text", "Config": {"Scoring": {"Type": 7}}});
+        assert!(parse_index_params(&bad_scoring).is_err());
+    }
 }

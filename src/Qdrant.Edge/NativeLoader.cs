@@ -23,7 +23,7 @@ public static class NativeLoader
     }
 
     /// <summary>Library version synced with ffi/python/amalgamate.py.</summary>
-    public const string ExpectedVersion = "0.10.0";
+    public const string ExpectedVersion = "0.11.0";
 
     internal static void EnsureLoaded()
     {
@@ -65,14 +65,38 @@ public static class NativeLoader
         string fileName = OperatingSystem.IsWindows() ? "qdrant_edge.dll"
             : OperatingSystem.IsMacOS() ? "libqdrant_edge.dylib"
             : "libqdrant_edge.so";
-        string candidate = Path.Combine(
-            AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
-        if (File.Exists(candidate) && NativeLibrary.TryLoad(candidate, out nint handle))
+        string relativePath = Path.Combine("runtimes", rid, "native", fileName);
+        foreach (string baseDirectory in NativeSearchDirectories(
+            Path.GetDirectoryName(typeof(NativeLoader).Assembly.Location),
+            AppContext.BaseDirectory))
         {
-            return handle;
+            string candidate = Path.Combine(baseDirectory, relativePath);
+            if (File.Exists(candidate) && NativeLibrary.TryLoad(candidate, out nint handle))
+            {
+                return handle;
+            }
         }
 
         return nint.Zero;
+    }
+
+    /// <summary>
+    /// Directories that can hold this assembly's <c>runtimes/</c> assets, in
+    /// probe order. The assembly directory comes first because a library loaded
+    /// into another host process (a plugin) keeps its assets beside its own dll,
+    /// while <see cref="AppContext.BaseDirectory"/> is the host's directory.
+    /// The base directory remains as the fallback for applications and for
+    /// single-file bundles, where the assembly has no location on disk.
+    /// </summary>
+    internal static string[] NativeSearchDirectories(string? assemblyDirectory, string baseDirectory)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseDirectory);
+        StringComparison comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        return string.IsNullOrEmpty(assemblyDirectory) || string.Equals(assemblyDirectory, baseDirectory, comparison)
+            ? [baseDirectory]
+            : [assemblyDirectory, baseDirectory];
     }
 
     private static string GetRid() => RuntimeInformation.ProcessArchitecture switch

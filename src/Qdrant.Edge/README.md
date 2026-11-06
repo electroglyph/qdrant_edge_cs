@@ -1,7 +1,7 @@
 # Qdrant.Edge (qdrant_edge_cs)
 
 Idiomatic C# interface for `qdrant_edge` (embedded single-shard vector search).
-Version `0.10.0`; native bridge `qdrant-edge-cabi` `0.10.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
+Version `0.11.0`; native bridge `qdrant-edge-cabi` `0.11.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
 
 ## Layout
 
@@ -14,7 +14,7 @@ Version `0.10.0`; native bridge `qdrant-edge-cabi` `0.10.0` (upstream `ffi` / `p
 
 The engine stays in Rust. `native/cabi/` (`qdrant-edge-cabi`, `cdylib` named
 `qdrant_edge`) exposes the JSON-in/JSON-out C ABI over the engine sources in
-the pinned `third_party/qdrant` submodule (qdrant @ `016542aa` — the ABI
+the pinned `third_party/qdrant` submodule (qdrant @ `222b2e44` v1.20.0 — the ABI
 depends on its engine types, so the pin is load-bearing). Release NuGet
 packages already contain prebuilt engines for all six RIDs — build from
 source only when working on the bridge itself. Clone with
@@ -72,6 +72,8 @@ operations throw `ShardClosedException`.
 ## v2 gaps
 
 Read-only follower (`live_reload`), batch writer (`apply_batch`/`preview_batch`),
-and the `Bm25` embed helper are not in v1 (not on the FFI surface, except BM25
-which is Python-only). v1 ships sparse search via `sparse_vector_data` +
+and the `Bm25` embed helper (`embed_query`/`embed_document`) are not in v1
+(not on the FFI surface; the embed helper is Python-only). BM25 text ranking
+over a text index (`TextIndexParams.Scoring` + `ScoringQuery.CreateText`) IS
+supported since engine v1.20.0. v1 ships sparse search via `sparse_vector_data` +
 `Modifier.Idf` only.
