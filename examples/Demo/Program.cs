@@ -1,4 +1,5 @@
 using Qdrant.Edge;
+using System.Text.Json.Nodes;
 
 EdgeConfig config = new()
 {
@@ -8,7 +9,7 @@ EdgeConfig config = new()
     },
 };
 
-string dir = Path.Combine(Path.GetTempPath(), "qdrant-edge-demo-" + Guid.NewGuid().ToString("N"));
+string dir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-demo-{Guid.NewGuid():N}");
 Console.WriteLine($"Demo dir: {dir}");
 Console.WriteLine($"Native available: {NativeLoader.IsAvailable}");
 
@@ -25,7 +26,7 @@ shard.Update(UpdateOperation.UpsertPoints(
     {
         Id = PointId.FromNumber(1),
         Vector = Vector.Single([6f, 9f, 4f, 2f]),
-        Payload = new System.Text.Json.Nodes.JsonObject { ["hello"] = "world" },
+        Payload = new JsonObject { ["hello"] = "world" },
     },
 ]));
 IReadOnlyList<ScoredPoint> hits = shard.Query(new QueryRequest

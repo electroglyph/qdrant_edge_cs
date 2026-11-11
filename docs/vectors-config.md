@@ -49,7 +49,7 @@ fresh temp dir per config so incompatible configs do not collide.
 
 ```csharp
 static string FreshDir(string tag) =>
-    Path.Combine(Path.GetTempPath(), $"qdrant-edge-{tag}-" + Guid.NewGuid().ToString("N"));
+    Path.Combine(Path.GetTempPath(), $"qdrant-edge-{tag}-{Guid.NewGuid():N}");
 
 EdgeConfig single = new()
 {

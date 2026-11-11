@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.12.0
+
+Managed binding targets .NET 11 only (`net11.0`, C# 15 via
+`<LangVersion>latest</LangVersion>`); .NET 10 consumers must stay on
+`0.11.x`. The native `qdrant-edge-cabi` bridge is unchanged — it rides
+the `0.12.0` release line so the binding and the bridge stay in lockstep
+(`NativeLoader.ExpectedVersion`, `Cargo.toml`, `Cargo.lock`).
+
+- CI publishes with .NET 11 SDK (`setup-dotnet 11.0.x`); every project
+  targets `net11.0` and the solution builds with zero warnings.
+- Modernize to current C#: primary-constructor exceptions, constant and
+  relational patterns (`is 0`, `is < 0.0`, `is -1`), list patterns
+  (`is []`), `!IsFinite` checks, target-typed `new`, a
+  `System.Runtime.InteropServices` global using, and interpolated
+  `$"{Guid.NewGuid():N}"` temp paths. `closed`/`union` hierarchies were
+  evaluated and rejected: the DTO shapes mirror the engine FFI contract
+  and the suite pins open-hierarchy fallbacks.
+- Remove the dead `EdgeShard.CreateCore` `configJsonRequired` parameter
+  (always `true`, unused in the body).
+- Docs: TFM/SDK references updated to .NET 11; snippets use the same
+  interpolation and collection-expression idioms as the code.
+
 ## 0.11.0
 
 Engine bump: `third_party/qdrant` `016542aa` (v1.19.2) → `222b2e44`

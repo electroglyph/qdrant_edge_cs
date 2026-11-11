@@ -19,7 +19,7 @@ internal static class TestHelpers
 
     internal static string TempDir()
     {
-        string dir = Path.Combine(Path.GetTempPath(), "qdrant-edge-" + Guid.NewGuid().ToString("N"));
+        string dir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-{Guid.NewGuid():N}");
         Directory.CreateDirectory(dir);
         return dir;
     }

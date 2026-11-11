@@ -83,7 +83,7 @@ public abstract record Vector
         static void ValidateMultiDense(IReadOnlyList<IReadOnlyList<float>> vectors)
         {
             ArgumentNullException.ThrowIfNull(vectors, nameof(vectors));
-            if (vectors.Count == 0)
+            if (vectors is [])
             {
                 throw new EdgeInvalidArgumentException("multi-dense vector must not be empty");
             }
@@ -92,13 +92,13 @@ public abstract record Vector
             foreach (IReadOnlyList<float> row in vectors)
             {
                 ArgumentNullException.ThrowIfNull(row, nameof(row));
-                if (row.Count == 0)
+                if (row is [])
                 {
                     throw new EdgeInvalidArgumentException("multi-dense vector rows must not be empty");
                 }
 
                 EdgeValidation.CheckVectorSize("multi-dense row", (ulong)row.Count);
-                width = width == -1 ? row.Count : width;
+                width = width is -1 ? row.Count : width;
                 if (row.Count != width)
                 {
                     throw new EdgeInvalidArgumentException("multi-dense vector rows must share one width");

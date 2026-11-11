@@ -34,7 +34,7 @@ files of a flushed shard directory in these examples.
 ## Manifest, full replace, and static unpack
 
 ```csharp
-string dir = Path.Combine(Path.GetTempPath(), "qdrant-edge-snap-" + Guid.NewGuid().ToString("N"));
+string dir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-snap-{Guid.NewGuid():N}");
 EdgeConfig fourDim = new()
 {
     VectorData = new Dictionary<string, VectorDataConfig>
@@ -53,7 +53,7 @@ string manifestJson = shard.SnapshotManifest();
 using System.Text.Json.JsonDocument manifest = System.Text.Json.JsonDocument.Parse(manifestJson);
 Console.WriteLine($"Manifest is JSON: {manifest.RootElement.ValueKind}");
 
-string archive = Path.Combine(Path.GetTempPath(), "snap-" + Guid.NewGuid().ToString("N") + ".tar");
+string archive = Path.Combine(Path.GetTempPath(), $"snap-{Guid.NewGuid():N}.tar");
 // Archive must be a valid snapshot tar (for example a GNU-tar of the flushed
 // shard directory). The two calls below require that file to exist.
 try
@@ -65,7 +65,7 @@ catch (EdgeException ex)
     Console.WriteLine($"Snapshot apply needs a valid archive: {ex.GetType().Name}");
 }
 
-string restoreDir = Path.Combine(Path.GetTempPath(), "qdrant-edge-restore-" + Guid.NewGuid().ToString("N"));
+string restoreDir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-restore-{Guid.NewGuid():N}");
 try
 {
     EdgeShard.UnpackSnapshot(archive, restoreDir);

@@ -103,7 +103,7 @@ public abstract record Query
             case RecommendQuery(var positives, var negatives, _, _):
                 ArgumentNullException.ThrowIfNull(positives, nameof(positives));
                 ArgumentNullException.ThrowIfNull(negatives, nameof(negatives));
-                if (positives.Count == 0)
+                if (positives is [])
                 {
                     throw new EdgeInvalidArgumentException("recommend query requires at least one positive example");
                 }

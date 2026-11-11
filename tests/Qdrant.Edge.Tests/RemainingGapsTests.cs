@@ -39,13 +39,13 @@ public sealed class RemainingGapsTests
         }
 
         string[] files = Directory.GetFiles(dir, "*", SearchOption.AllDirectories);
-        _output.WriteLine("Shard files: " + string.Join(", ", files.Select(f => Path.GetRelativePath(dir, f))));
+        _output.WriteLine($"Shard files: {string.Join(", ", files.Select(f => Path.GetRelativePath(dir, f)))}");
         string? configFile = files.FirstOrDefault(
             f => Path.GetFileName(f).Contains("config", StringComparison.OrdinalIgnoreCase));
         if (configFile is not null)
         {
             File.Move(configFile, configFile + ".bak");
-            _output.WriteLine("Renamed config file: " + Path.GetRelativePath(dir, configFile));
+            _output.WriteLine($"Renamed config file: {Path.GetRelativePath(dir, configFile)}");
         }
         else
         {
@@ -74,7 +74,7 @@ public sealed class RemainingGapsTests
         string dir = TestHelpers.TempDir();
         using EdgeShard shard = EdgeShard.Create(dir, TestHelpers.FourDimDotConfig());
         EdgeConfig echoed = shard.GetConfig();
-        _output.WriteLine("Effective config: " + JsonSerializer.Serialize(echoed, EdgeJsonContext.Deep.EdgeConfig));
+        _output.WriteLine($"Effective config: {JsonSerializer.Serialize(echoed, EdgeJsonContext.Deep.EdgeConfig)}");
         Assert.True(echoed.VectorData.ContainsKey(string.Empty));
         Assert.Equal(4ul, echoed.VectorData[string.Empty].Size);
         Assert.Equal(Distance.Dot, echoed.VectorData[string.Empty].Distance);

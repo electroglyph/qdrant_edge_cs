@@ -39,7 +39,7 @@ public sealed record FieldCondition
         count += GeoRadius is not null ? 1 : 0;
         count += GeoPolygon is not null ? 1 : 0;
         count += ValuesCount is not null ? 1 : 0;
-        if (count == 0)
+        if (count is 0)
         {
             throw new EdgeInvalidArgumentException(
                 "field condition has no predicate set: specify exactly one of match, range, datetime_range, geo_bounding_box, geo_radius, geo_polygon, or values_count");
@@ -159,7 +159,7 @@ public abstract record Condition
                 ArgumentException.ThrowIfNullOrWhiteSpace(vectorName, nameof(vectorName));
                 break;
             case SliceCondition(var total, var index):
-                if (total == 0)
+                if (total is 0)
                 {
                     throw new EdgeInvalidArgumentException("slice total must be > 0");
                 }

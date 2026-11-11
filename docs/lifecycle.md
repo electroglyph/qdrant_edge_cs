@@ -41,7 +41,7 @@ a temp dir plus a 4-dim `Distance.Dot` fixture unless stated.
 ### Create creates a missing directory; load without config does not
 
 ```csharp
-string missing = Path.Combine(Path.GetTempPath(), "qdrant-edge-missing-" + Guid.NewGuid().ToString("N"));
+string missing = Path.Combine(Path.GetTempPath(), $"qdrant-edge-missing-{Guid.NewGuid():N}");
 EdgeConfig fourDim = new()
 {
     VectorData = new Dictionary<string, VectorDataConfig>
@@ -53,7 +53,7 @@ EdgeConfig fourDim = new()
 using EdgeShard created = EdgeShard.Create(missing, fourDim);
 Console.WriteLine($"Created at {created.Path}: loaded={created.IsLoaded}");
 
-string absent = Path.Combine(Path.GetTempPath(), "qdrant-edge-absent-" + Guid.NewGuid().ToString("N"));
+string absent = Path.Combine(Path.GetTempPath(), $"qdrant-edge-absent-{Guid.NewGuid():N}");
 try
 {
     using EdgeShard noCreate = EdgeShard.Load(absent);
@@ -73,7 +73,7 @@ directory behind.
 
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the previous example.
-string fresh = Path.Combine(Path.GetTempPath(), "qdrant-edge-fresh-" + Guid.NewGuid().ToString("N"));
+string fresh = Path.Combine(Path.GetTempPath(), $"qdrant-edge-fresh-{Guid.NewGuid():N}");
 using EdgeShard viaLoad = EdgeShard.Load(fresh, fourDim);
 Console.WriteLine($"Load-with-config created: {viaLoad.IsLoaded}");
 ```
@@ -82,7 +82,7 @@ Console.WriteLine($"Load-with-config created: {viaLoad.IsLoaded}");
 
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the first example.
-string dir = Path.Combine(Path.GetTempPath(), "qdrant-edge-roundtrip-" + Guid.NewGuid().ToString("N"));
+string dir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-roundtrip-{Guid.NewGuid():N}");
 using EdgeShard shard = EdgeShard.Create(dir, fourDim);
 shard.Update(UpdateOperation.UpsertPoints(
 [
@@ -110,7 +110,7 @@ Expected: `After unload: loaded=False`, the `Path` message, and count 1.
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the first example.
 // dir is a fresh temp dir; shard is a loaded shard on that dir.
-string opDir = Path.Combine(Path.GetTempPath(), "qdrant-edge-ops-" + Guid.NewGuid().ToString("N"));
+string opDir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-ops-{Guid.NewGuid():N}");
 using EdgeShard shard = EdgeShard.Create(opDir, fourDim);
 shard.Unload();
 try
@@ -128,7 +128,7 @@ catch (ShardClosedException)
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the first example.
 using EdgeShard tuned = EdgeShard.Create(
-    Path.Combine(Path.GetTempPath(), "qdrant-edge-tuned-" + Guid.NewGuid().ToString("N")), fourDim);
+    Path.Combine(Path.GetTempPath(), $"qdrant-edge-tuned-{Guid.NewGuid():N}"), fourDim);
 EdgeConfig echoed = tuned.GetConfig();
 Console.WriteLine($"Echoed size: {echoed.VectorData[""].Size}");
 tuned.SetHnswConfig(new HnswIndexConfig { M = 32, EfConstruct = 200 });
@@ -146,7 +146,7 @@ before the native call; `SetOptimizersConfig` validates optimizer bounds.
 
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the first example.
-string missingNativeDir = Path.Combine(Path.GetTempPath(), "qdrant-edge-missing-native-" + Guid.NewGuid().ToString("N"));
+string missingNativeDir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-missing-native-{Guid.NewGuid():N}");
 if (!NativeLoader.IsAvailable)
 {
     try
@@ -165,7 +165,7 @@ if (!NativeLoader.IsAvailable)
 ```csharp
 // fourDim is the 4-dim Distance.Dot EdgeConfig from the first example.
 using EdgeShard asyncShard = EdgeShard.Create(
-    Path.Combine(Path.GetTempPath(), "qdrant-edge-async-" + Guid.NewGuid().ToString("N")), fourDim);
+    Path.Combine(Path.GetTempPath(), $"qdrant-edge-async-{Guid.NewGuid():N}"), fourDim);
 IReadOnlyList<ScoredPoint> asyncHits = await asyncShard.QueryAsync(new QueryRequest { Limit = 5 });
 IReadOnlyList<ScoredPoint> asyncSearch = await asyncShard.SearchAsync(new SearchRequest
 {
@@ -196,7 +196,7 @@ the thread pool and cannot cancel an in-flight call.
 // asyncShard is a loaded shard from the previous example; to run standalone,
 // create it first with the two lines below.
 using EdgeShard asyncShard = EdgeShard.Create(
-    Path.Combine(Path.GetTempPath(), "qdrant-edge-concurrent-" + Guid.NewGuid().ToString("N")), fourDim);
+    Path.Combine(Path.GetTempPath(), $"qdrant-edge-concurrent-{Guid.NewGuid():N}"), fourDim);
 IReadOnlyList<Task> readers = Enumerable.Range(0, 4)
     .Select(_ => Task.Run(() => asyncShard.Count(new CountRequest { Exact = true })))
     .ToArray();

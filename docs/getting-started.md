@@ -5,7 +5,7 @@ first create-upsert-query-flush-reopen round-trip. For the full lifecycle
 surface (`Load` variants, `Unload` vs `Dispose`, config setters) see
 [`lifecycle.md`](lifecycle.md).
 
-Prerequisites: .NET 10 SDK, Rust toolchain (native build only),
+Prerequisites: .NET 11 SDK, Rust toolchain (native build only),
 `git clone --recurse-submodules` (the engine pin in
 `third_party/qdrant` is load-bearing).
 
@@ -43,10 +43,10 @@ Binaries are git-ignored CI artifacts.
 | `win-x64` | `qdrant_edge.dll` |
 | `win-arm64` | `qdrant_edge.dll` |
 
-Example layout for a `linux-x64` app rooted at `bin/Release/net10.0/`:
+Example layout for a `linux-x64` app rooted at `bin/Release/net11.0/`:
 
 ```text
-bin/Release/net10.0/runtimes/linux-x64/native/libqdrant_edge.so
+bin/Release/net11.0/runtimes/linux-x64/native/libqdrant_edge.so
 ```
 
 `NativeLoader` resolves only this layout (per-RID directory, OS-specific file
@@ -61,7 +61,7 @@ if (!NativeLoader.IsAvailable)
 ```
 
 `NativeLoader.ExpectedVersion` is `"0.11.0"` and matches
-`src/Qdrant.Edge/Qdrant.Edge.csproj` (`VersionPrefix 0.11.0`) and
+`src/Qdrant.Edge/Qdrant.Edge.csproj` (`VersionPrefix 0.12.0`) and
 `native/cabi/Cargo.toml`. Without a staged library, `EdgeShard.Create` and
 `EdgeShard.Load` throw `EdgeOperationException`.
 
@@ -70,7 +70,7 @@ if (!NativeLoader.IsAvailable)
 ```csharp
 using Qdrant.Edge;
 
-string dir = Path.Combine(Path.GetTempPath(), "qdrant-edge-first-" + Guid.NewGuid().ToString("N"));
+string dir = Path.Combine(Path.GetTempPath(), $"qdrant-edge-first-{Guid.NewGuid():N}");
 
 EdgeConfig config = new()
 {

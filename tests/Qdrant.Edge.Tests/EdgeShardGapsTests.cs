@@ -21,7 +21,7 @@ public sealed class EdgeShardGapsTests
             [typeof(EdgeShardHandle), typeof(string)]);
         Assert.NotNull(ctor);
         return (EdgeShard)ctor!.Invoke(
-            [new EdgeShardHandle(), Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))]);
+            [new EdgeShardHandle(), Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}")]);
     }
 
     private static SearchRequest ValidSearch() => new()
@@ -81,7 +81,7 @@ public sealed class EdgeShardGapsTests
             case "SetOptimizers": shard.SetOptimizersConfig(new OptimizersConfig { MaxSegmentSizeKb = 1024 }); break;
             case "SnapshotManifest": shard.SnapshotManifest(); break;
             case "UpdateFromSnapshot":
-                shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
+                shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"));
                 break;
             case "Path": _ = shard.Path; break;
             default: throw new InvalidOperationException($"unknown op {op}");
@@ -268,7 +268,7 @@ public sealed class EdgeShardGapsTests
 
         using EdgeShard shard = EdgeShard.Create(TestHelpers.TempDir(), TestHelpers.FourDimDotConfig());
         Assert.Throws<EdgeOperationException>(() =>
-            shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))));
+            shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}")));
         shard.Unload();
         shard.Unload();
         Assert.False(shard.IsLoaded);
@@ -913,7 +913,7 @@ public sealed class EdgeShardGapsTests
     {
         Assert.Throws<ArgumentException>(() =>
             GuardOnlyShard().UpdateFromSnapshot(
-                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), "  "));
+                Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"), "  "));
     }
 
     [Fact]
@@ -923,7 +923,7 @@ public sealed class EdgeShardGapsTests
         // guard-only handle reports ShardClosed rather than an argument error.
         Assert.Throws<ShardClosedException>(() =>
             GuardOnlyShard().UpdateFromSnapshot(
-                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), null));
+                Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"), null));
     }
 
     private static void PackShardDirectory(string sourceDir, string tarPath)
@@ -958,7 +958,7 @@ public sealed class EdgeShardGapsTests
             seed.Dispose();
         }
 
-        string tar = Path.Combine(Path.GetTempPath(), "qdrant-edge-snap-" + Guid.NewGuid().ToString("N") + ".tar");
+        string tar = Path.Combine(Path.GetTempPath(), $"qdrant-edge-snap-{Guid.NewGuid():N}.tar");
         PackShardDirectory(dir, tar);
         return tar;
     }
@@ -1021,7 +1021,7 @@ public sealed class EdgeShardGapsTests
     public void UnpackSnapshot_NullTarget_ThrowsArgumentNull()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), null!));
+            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"), null!));
     }
 
     [Theory]
@@ -1038,7 +1038,7 @@ public sealed class EdgeShardGapsTests
     public void UnpackSnapshot_WhitespaceTarget_ThrowsArgument(string target)
     {
         Assert.Throws<ArgumentException>(() =>
-            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), target));
+            EdgeShard.UnpackSnapshot(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"), target));
     }
 
     [Fact]
@@ -1053,9 +1053,9 @@ public sealed class EdgeShardGapsTests
             return;
         }
 
-        string tiny = Path.Combine(Path.GetTempPath(), "qdrant-edge-tiny-" + Guid.NewGuid().ToString("N") + ".txt");
+        string tiny = Path.Combine(Path.GetTempPath(), $"qdrant-edge-tiny-{Guid.NewGuid():N}.txt");
         File.WriteAllText(tiny, "hello");
-        string tar = Path.Combine(Path.GetTempPath(), "qdrant-edge-tiny-" + Guid.NewGuid().ToString("N") + ".tar");
+        string tar = Path.Combine(Path.GetTempPath(), $"qdrant-edge-tiny-{Guid.NewGuid():N}.tar");
         try
         {
             using (FileStream output = File.Create(tar))

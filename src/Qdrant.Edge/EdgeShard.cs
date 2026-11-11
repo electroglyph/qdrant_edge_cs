@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 // JsonTypeInfo<T> lives in .Metadata on every supported target framework.
 using JsonTypeInfoOfObject = System.Text.Json.Serialization.Metadata.JsonTypeInfo<object>;
 
@@ -61,7 +59,7 @@ public sealed class EdgeShard : IDisposable
         ArgumentNullException.ThrowIfNull(config, nameof(config));
         cancellationToken.ThrowIfCancellationRequested();
         config.Validate();
-        return CreateCore(path, JsonSerializer.Serialize(config, EdgeJsonContext.Deep.EdgeConfig), configJsonRequired: true);
+        return CreateCore(path, JsonSerializer.Serialize(config, EdgeJsonContext.Deep.EdgeConfig));
     }
 
     /// <summary>Opens an existing shard at <paramref name="path"/>, or creates one when <paramref name="config"/> is given.</summary>
@@ -451,7 +449,7 @@ public sealed class EdgeShard : IDisposable
             ?? throw new EdgeOperationException("engine returned an empty matrix response");
     }
 
-    private static EdgeShard CreateCore(string path, string configJson, bool configJsonRequired)
+    private static EdgeShard CreateCore(string path, string configJson)
     {
         NativeLoader.EnsureLoaded();
         if (!NativeLoader.IsAvailable)
@@ -475,7 +473,7 @@ public sealed class EdgeShard : IDisposable
             ThrowForStatus(status, "create shard");
         }
 
-        return new EdgeShard(new EdgeShardHandle(handle), path);
+        return new EdgeShard(new(handle), path);
     }
 
     private static EdgeShard LoadCore(string path, string? configJson)
@@ -502,7 +500,7 @@ public sealed class EdgeShard : IDisposable
             ThrowForStatus(status, "load shard");
         }
 
-        return new EdgeShard(new EdgeShardHandle(handle), path);
+        return new EdgeShard(new(handle), path);
     }
 
     private string CallNativeRaw(string method, string? requestJson)

@@ -135,7 +135,7 @@ public sealed record OptimizersConfig
     {
         if (DeletedThreshold is double threshold)
         {
-            if (double.IsNaN(threshold) || double.IsInfinity(threshold) || threshold is < 0.0 or > 1.0)
+            if (!double.IsFinite(threshold) || threshold is < 0.0 or > 1.0)
             {
                 throw new EdgeInvalidArgumentException($"optimizers deleted_threshold {threshold} must be finite and in [0, 1]");
             }
@@ -146,17 +146,17 @@ public sealed record OptimizersConfig
             throw new EdgeInvalidArgumentException($"optimizers vacuum_min_vector_number {vacuum} exceeds maximum {EdgeValidation.MaxResultCount}");
         }
 
-        if (DefaultSegmentNumber is ulong segments && (segments == 0 || segments > EdgeValidation.MaxResultCount))
+        if (DefaultSegmentNumber is ulong segments && (segments is 0 || segments > EdgeValidation.MaxResultCount))
         {
             throw new EdgeInvalidArgumentException($"optimizers default_segment_number {segments} is out of range 1..={EdgeValidation.MaxResultCount}");
         }
 
-        if (MaxSegmentSizeKb is ulong maxSegment && maxSegment == 0)
+        if (MaxSegmentSizeKb is ulong maxSegment && maxSegment is 0)
         {
             throw new EdgeInvalidArgumentException("optimizers max_segment_size_kb must be > 0");
         }
 
-        if (IndexingThresholdKb is ulong indexing && indexing == 0)
+        if (IndexingThresholdKb is ulong indexing && indexing is 0)
         {
             throw new EdgeInvalidArgumentException("optimizers indexing_threshold_kb must be > 0");
         }
@@ -185,7 +185,7 @@ public sealed record EdgeConfig
     /// <exception cref="EdgeInvalidArgumentException">When the config is empty or invalid.</exception>
     public void Validate()
     {
-        if (VectorData.Count == 0 && SparseVectorData.Count == 0)
+        if (VectorData.Count is 0 && SparseVectorData.Count is 0)
         {
             throw new EdgeInvalidArgumentException("config must define at least one of vectors or sparse_vectors");
         }

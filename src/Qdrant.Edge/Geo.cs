@@ -38,7 +38,7 @@ public sealed record GeoRadius
         ArgumentNullException.ThrowIfNull(Center, nameof(Center));
         Center.Validate();
         EdgeValidation.CheckFinite(nameof(Radius), Radius);
-        if (Radius < 0.0)
+        if (Radius is < 0.0)
         {
             throw new EdgeInvalidArgumentException($"geo radius {Radius} must be >= 0");
         }
@@ -89,7 +89,7 @@ public sealed record GeoPolygon
         static void CheckRing(GeoLineString ring, string name)
         {
             ring.Validate();
-            if (ring.Points.Count < 4)
+            if (ring.Points.Count is < 4)
             {
                 throw new EdgeInvalidArgumentException($"geo polygon {name} ring needs at least 4 points, got {ring.Points.Count}");
             }

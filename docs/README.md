@@ -1,10 +1,10 @@
-# Qdrant.Edge documentation (v0.11.0, `net10.0`)
+# Qdrant.Edge documentation (v0.12.0, `net11.0`)
 
 Purpose: task-oriented guides for the `Qdrant.Edge` managed binding with
 copy-pasteable C# examples. The XML doc comments on the public API remain the
 authoritative reference; these pages explain how the pieces fit together.
 
-Prerequisites: .NET 10 SDK, a local clone with submodules, and one native
+Prerequisites: .NET 11 SDK, a local clone with submodules, and one native
 `qdrant_edge` library per target RID (see [`getting-started.md`](getting-started.md)). All examples
 assume `using Qdrant.Edge;`, a temp directory from `Path.GetTempPath()`, and a
 4-dimension `Distance.Dot` fixture unless stated otherwise.
@@ -22,7 +22,7 @@ assume `using Qdrant.Edge;`, a temp directory from `Path.GetTempPath()`, and a
 9. [`snapshots-tuning.md`](snapshots-tuning.md) — snapshots, `Optimize`, tuning, `SearchMatrix`.
 10. [`errors-limits.md`](errors-limits.md) — exceptions, caps, FFI-vs-Python divergences, v2 gaps.
 
-Version note: managed package and C ABI are both `0.11.0`
+Version note: managed package and C ABI are both `0.12.0`
 (`NativeLoader.ExpectedVersion`, `src/Qdrant.Edge/Qdrant.Edge.csproj`). The
 upstream `ffi`/`python` crates are `0.8.0` at the pinned `third_party/qdrant`
 submodule commit (`222b2e44` v1.20.0); resync when `lib/edge/VERSION` lands.

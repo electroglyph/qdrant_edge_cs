@@ -4,13 +4,13 @@ Full guides: [`docs/README.md`](docs/README.md) (start with [`docs/getting-start
 
 Embedded single-shard vector search for .NET: idiomatic C# over the Qdrant edge engine, which stays in Rust behind a small JSON C ABI. No server, no gRPC — a shard is a directory on disk plus a native library.
 
-- Package `qdrant_edge_cs`, version `0.11.0`, targets `net10.0` (C# 14, nullable enabled).
+- Package `qdrant_edge_cs`, version `0.12.0`, targets `net11.0` (C# 15, nullable enabled).
 - Read-write `EdgeShard`: create/load, point/vector/payload updates, ANN query, scroll, facet, groups, snapshots.
 - Every request is validated client-side before touching native; failures throw typed `EdgeException`s.
 
 ## Prerequisites
 
-- .NET 10 SDK.
+- .NET 11 SDK.
 - Rust toolchain (only for source builds; not needed with the NuGet package).
 
 Get the code with submodules (the engine lives in pinned `third_party/qdrant`; the pin is load-bearing):
@@ -26,7 +26,7 @@ cd qdrant_edge_cs
 dotnet add package qdrant_edge_cs
 ```
 
-The package targets `net10.0` and ships prebuilt native engines for all six
+The package targets `net11.0` and ships prebuilt native engines for all six
 RIDs (`linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`, `win-x64`,
 `win-arm64`) as `runtimes/` assets, so no Rust toolchain or manual staging is
 needed:

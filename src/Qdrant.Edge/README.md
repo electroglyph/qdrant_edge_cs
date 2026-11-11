@@ -1,7 +1,7 @@
 # Qdrant.Edge (qdrant_edge_cs)
 
 Idiomatic C# interface for `qdrant_edge` (embedded single-shard vector search).
-Version `0.11.0`; native bridge `qdrant-edge-cabi` `0.11.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
+Version `0.12.0`; native bridge `qdrant-edge-cabi` `0.12.0` (upstream `ffi` / `python` crates are `0.8.0` at the pinned submodule commit).
 
 ## Layout
 

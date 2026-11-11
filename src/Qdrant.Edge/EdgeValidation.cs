@@ -92,7 +92,7 @@ public static class EdgeValidation
     public static void CheckFinite(string field, double value)
     {
         ArgumentException.ThrowIfNullOrEmpty(field, nameof(field));
-        if (double.IsNaN(value) || double.IsInfinity(value))
+        if (!double.IsFinite(value))
         {
             throw new EdgeInvalidArgumentException($"{field} must be finite, got {value}");
         }
@@ -105,7 +105,7 @@ public static class EdgeValidation
     public static void CheckFinite(string field, float value)
     {
         ArgumentException.ThrowIfNullOrEmpty(field, nameof(field));
-        if (float.IsNaN(value) || float.IsInfinity(value))
+        if (!float.IsFinite(value))
         {
             throw new EdgeInvalidArgumentException($"{field} must be finite, got {value}");
         }

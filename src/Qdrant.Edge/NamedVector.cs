@@ -40,7 +40,7 @@ public abstract record NamedVector
                 break;
             case MultiDenseNamedVector(var rows):
                 ArgumentNullException.ThrowIfNull(rows, nameof(rows));
-                if (rows.Count == 0)
+                if (rows is [])
                 {
                     throw new EdgeInvalidArgumentException("multi-dense vector must not be empty");
                 }
@@ -49,13 +49,13 @@ public abstract record NamedVector
                 foreach (IReadOnlyList<float> row in rows)
                 {
                     ArgumentNullException.ThrowIfNull(row, nameof(row));
-                    if (row.Count == 0)
+                    if (row is [])
                     {
                         throw new EdgeInvalidArgumentException("multi-dense vector rows must not be empty");
                     }
 
                     EdgeValidation.CheckVectorSize("multi-dense row", (ulong)row.Count);
-                    width = width == -1 ? row.Count : width;
+                    width = width is -1 ? row.Count : width;
                     if (row.Count != width)
                     {
                         throw new EdgeInvalidArgumentException("multi-dense vector rows must share one width");

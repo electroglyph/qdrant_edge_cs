@@ -156,7 +156,7 @@ public sealed record Bm25Params
         if (K is float k)
         {
             EdgeValidation.CheckFinite("bm25 k", k);
-            if (k < 0f)
+            if (k is < 0f)
             {
                 throw new EdgeInvalidArgumentException($"bm25 k {k} must be non-negative");
             }

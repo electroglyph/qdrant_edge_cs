@@ -13,7 +13,7 @@ public sealed class EdgeShardSnapshotNativeTests
 
         using EdgeShard shard = SeedThree(out _);
         Assert.Throws<EdgeOperationException>(() =>
-            shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))));
+            shard.UpdateFromSnapshot(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}")));
         Assert.Equal(3ul, shard.Count(new CountRequest()));
     }
 
@@ -26,7 +26,7 @@ public sealed class EdgeShardSnapshotNativeTests
         }
 
         using EdgeShard shard = SeedThree(out _);
-        string garbage = Path.Combine(Path.GetTempPath(), "qdrant-edge-garbage-" + Guid.NewGuid().ToString("N"));
+        string garbage = Path.Combine(Path.GetTempPath(), $"qdrant-edge-garbage-{Guid.NewGuid():N}");
         File.WriteAllText(garbage, "not a snapshot");
         try
         {
@@ -48,7 +48,7 @@ public sealed class EdgeShardSnapshotNativeTests
         }
 
         Assert.Throws<EdgeOperationException>(() => EdgeShard.UnpackSnapshot(
-            Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")),
+            Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}"),
             TestHelpers.TempDir()));
     }
 

@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace Qdrant.Edge;
 
 /// <summary>Safe handle over an opaque native <c>QdrantEdgeShard*</c>.</summary>

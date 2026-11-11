@@ -109,7 +109,7 @@ public abstract record Expression
     public static Expression Max(IReadOnlyList<Expression> operands)
     {
         ArgumentNullException.ThrowIfNull(operands, nameof(operands));
-        if (operands.Count == 0)
+        if (operands is [])
         {
             throw new EdgeInvalidArgumentException("max requires at least one operand");
         }
@@ -122,7 +122,7 @@ public abstract record Expression
     public static Expression Min(IReadOnlyList<Expression> operands)
     {
         ArgumentNullException.ThrowIfNull(operands, nameof(operands));
-        if (operands.Count == 0)
+        if (operands is [])
         {
             throw new EdgeInvalidArgumentException("min requires at least one operand");
         }
@@ -240,11 +240,7 @@ public abstract record Expression
             EdgeValidation.CheckFinite(nameof(scale), sc);
         }
 
-        List<Expression> parts = [x];
-        if (target is not null)
-        {
-            parts.Add(target);
-        }
+        List<Expression> parts = target is null ? [x] : [x, target];
 
         (ulong size, uint depth) = Measure(parts);
         return new DecayExpression(kind, x, target, midpoint, scale) { Size = size, Depth = depth };
@@ -388,7 +384,7 @@ public abstract record Expression
     private static (ulong Size, uint Depth) MeasureNonEmpty(IReadOnlyList<Expression> parts, string op)
     {
         ArgumentNullException.ThrowIfNull(parts, nameof(parts));
-        if (parts.Count == 0)
+        if (parts is [])
         {
             throw new EdgeInvalidArgumentException($"{op} requires at least one operand");
         }
