@@ -53,7 +53,7 @@ public sealed class InteropGapsTests
     [Fact]
     public void NativeLoader_ExpectedVersion_MatchesCabiCargoToml()
     {
-        Assert.Equal("0.12.0", NativeLoader.ExpectedVersion);
+        Assert.Equal("0.13.0", NativeLoader.ExpectedVersion);
         Assert.Equal(NativeLoader.ExpectedVersion, ReadCabiCargoVersion());
     }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.0
+
+Engine bump: `third_party/qdrant` `222b2e44` (v1.20.0) → `23065a0b`
+(v1.20.2). The `qdrant-edge-cabi` bridge builds unchanged against the new
+engine (no FFI surface change); its pin comment moves and `Cargo.lock` is
+regenerated for the new tree — notably `qdrant-rust-stemmers` 1.2.2 → 1.2.3,
+which carries the Greek stemmer panic fix below.
+
+- Regression pins for upstream v1.20.1/v1.20.2 fixes: Euclid recommend
+  with `BestScore` applies `ScoreThreshold` in the correct direction,
+  group-by still returns valid groups past object-valued group keys, the
+  Greek Snowball stemmer indexes without panicking, and
+  `geo_distance` over multi-point geo payloads uses the nearest point.
+
 ## 0.12.0
 
 Managed binding targets .NET 11 only (`net11.0`, C# 15 via

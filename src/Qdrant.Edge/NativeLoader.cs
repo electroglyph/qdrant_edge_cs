@@ -21,7 +21,7 @@ public static class NativeLoader
     }
 
     /// <summary>Library version synced with ffi/python/amalgamate.py.</summary>
-    public const string ExpectedVersion = "0.12.0";
+    public const string ExpectedVersion = "0.13.0";
 
     internal static void EnsureLoaded()
     {
